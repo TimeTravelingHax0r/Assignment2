@@ -2,26 +2,29 @@ import java.util.LinkedList;
 
 public class Location {
     private SceneCard card;
-    public LinkedList<SceneCard> offTheCard;
+    public LinkedList<Role> offCardRoles;
+    int[] shots;
 
-    public Location() {
-        
+    public Location(SceneCard card, LinkedList<Role> offCardRoles, int[] shots) {
+        this.card = card;
+        this.offCardRoles = offCardRoles;
+        this.shots = shots;
     }
 
     public int getBudget() {
-        return 0;
+        return card.getBudget();
     }
 
-    public LinkedList<Role> getCard() {
-        return new LinkedList<Role>();
+    public SceneCard getCard() {
+        return this.card;
     }
 
     public LinkedList<Role> getOffCard() {
-        return new LinkedList<Role>();
+        return this.offCardRoles;
     }
 
     public void takeRole() {
-
+        // implement later
     }
 
 }

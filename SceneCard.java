@@ -4,16 +4,17 @@ public class SceneCard {
     private int budget;
     private LinkedList<Role> roles;
 
-    public SceneCard() {
-
+    public SceneCard(int budget, LinkedList<Role> roles) {
+        this.budget = budget;
+        this.roles = roles;
     }
 
-    private int getBudget() {
-        return 0;
+    public int getBudget() {
+        return this.budget;
     }
 
     public LinkedList<Role> getRoles() {
-        return new LinkedList<Role>();
+        return this.roles;
     }
 
 }

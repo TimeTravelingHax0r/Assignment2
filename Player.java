@@ -1,52 +1,84 @@
 public class Player {
     private int dollars;
-    private int credit;
+    private int credits;
     private int practiceChips;
     private PlayerDice dice;
     private String name;
     private Location currLocation;
 
-    public Player() {
-
+    public Player(String name) {
+        this.name = name;
+        this.dollars = 0;
+        this.credits = 0;
+        this.practiceChips = 0
+        this.dice = new PlayerDice();
     }
 
     public int rollDice(int numOfDice) {
-        return 0;
+        return dice.rollPlayerDice(numOfDice);
     }
 
-    public int getName() {
-        return 0;
+    public String getName() {
+        return this.name;
     }
 
     public int getDollars() {
-        return 0;
+        return this.dollars;
     }
 
     public int getCredits() {
-        return 0;
+        return this.credits;
     }
 
-    public void updateCredit(int amount) {
-
+    public Location getLocation() {
+        return this.currLocation;
     }
 
-    public void updateDollars(int amount) {
-
+    public boolean updateCredit(int amount) {
+        if ((amount) < 0 && ((-amount) > this.credits)) {
+            System.out.println("Insufficient funds: credit");
+            return false;
+        } else {
+            this.credits += amount;
+            return true;
+        }
     }
 
-    public void incrementPracitce(int amount) {
+    public boolean updateDollars(int amount) {
+        if ((amount) < 0 && ((-amount) > this.dollars)) {
+            System.out.println("Insufficient funds: dollar");
+            return false;
+        } else {
+            this.dollars += amount;
+            return true;
+        }
+    }
 
+    public boolean incrementPracitce() {
+        if (this.practiceChips == 5) {
+            System.out.println("Maximum chips reached");
+            return false;
+        } else {
+            this.practiceChips++;
+            return true;
+        }
     }
 
     public void clearPractice() {
-
+        this.practiceChips = 0;
     }
 
     public boolean updateRank(int desiredRank) {
-        return true;
+        if (desiredRank > this.dice.getRank()) {
+            this.dice.updateRank(desiredRank);
+            return false;
+        } else {
+            System.out.println("Cannot lower rank");
+            return true;
+        }
     }
 
-    public boolean movePlayer(Location location) {
-        return true;
+    public void movePlayer(Location newLocation) {
+        this.currLocation = newLocation;
     }
 }
