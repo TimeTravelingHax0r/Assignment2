@@ -5,14 +5,17 @@ public class Board {
     private LinkedList<Location> locations;
     private Location castingOffice;
     private Location trailer;
-    private HashMap<Location, Location> connections;
+    private HashMap<Location, LinkedList<String>> connections;
 
-    public Board() {
-
+    public Board(LinkedList<Location> locations, Location castingOffice, Location trailer, HashMap<Location, LinkedList<String>> connections) {
+        this.locations = locations;
+        this.castingOffice = castingOffice;
+        this.trailer = trailer;
+        this.connections = connections;
     }
 
-    public LinkedList<Location> getLocations() {
-        return  new LinkedList<Location>();
+    public LinkedList<String> getAdjLocations(Player player) {
+        return new LinkedList<String>();
     }
 
     public void setBoard(LinkedList<Location> locations, HashMap<Location, Location> connections) {
@@ -28,6 +31,6 @@ public class Board {
     }
 
     public Location getTrailer() {
-        return new Location();
+        return this.trailer;
     }
 }

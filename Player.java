@@ -6,12 +6,13 @@ public class Player {
     private String name;
     private Location currLocation;
 
-    public Player(String name) {
+    public Player(String name, int startRank, int startCredits) {
         this.name = name;
         this.dollars = 0;
-        this.credits = 0;
-        this.practiceChips = 0
+        this.credits = startCredits;
+        this.practiceChips = 0;
         this.dice = new PlayerDice();
+        dice.updateRank(startRank);
     }
 
     public int rollDice(int numOfDice) {
