@@ -1,7 +1,7 @@
 public class winSequence{
 	private int winners = 0;
 	
-	private int calcScore(LinkedList<Player>){
+	private int calcScore(LinkedList<Player> players){
 		int highScore = 0;
 		for(Player i : players){
 			if((i.getDollars() + i.getCredits() + (5*i.getRank())) > highScore){
@@ -11,10 +11,10 @@ public class winSequence{
 		return highScore;
 	}
 					     
-	private String getWinner(){
+	private String getWinner(LinkedList<Player> players){
 		String[] winners;
 		int num = 0;
-		int highScore = calcScore();
+		int highScore = calcScore(players);
 		for(Player i : players){
 			if((i.getDollars() + i.getCredits() + (5*i.getRank())) = highScore){
 				winners[num] = i.getName();
