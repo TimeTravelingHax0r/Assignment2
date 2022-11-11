@@ -35,6 +35,10 @@ public class Player {
         return this.currLocation;
     }
 
+    public int getRank() {
+        return dice.getRank();
+    }
+
     public boolean updateCredit(int amount) {
         if ((amount) < 0 && ((-amount) > this.credits)) {
             System.out.println("Insufficient funds: credit");

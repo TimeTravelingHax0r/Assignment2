@@ -5,13 +5,15 @@ public class Board {
     private LinkedList<Location> locations;
     private Location castingOffice;
     private Location trailer;
-    private HashMap<Location, LinkedList<String>> connections;
+    private HashMap<String, LinkedList<String>> connections;
+    private Upgrades upgrades;
 
-    public Board(LinkedList<Location> locations, Location castingOffice, Location trailer, HashMap<Location, LinkedList<String>> connections) {
+    public Board(LinkedList<Location> locations, HashMap<String, LinkedList<String>> connections, Upgrades upgrades, Location trailer, Location castingOffice) {
         this.locations = locations;
         this.castingOffice = castingOffice;
         this.trailer = trailer;
         this.connections = connections;
+        this.upgrades = upgrades;
     }
 
     public LinkedList<String> getAdjLocations(Player player) {
@@ -28,10 +30,14 @@ public class Board {
 
     public Location getCasting() {
         int[] test = {1,2,3};
-        return new Location("", new SceneCard("", 5, new LinkedList<Role>()), new LinkedList<Role>(), test);
+        return new Location("", new LinkedList<Role>(), 1);
     }
 
     public Location getTrailer() {
         return this.trailer;
+    }
+
+    public Upgrades getUpgradeMap() {
+        return this.upgrades;
     }
 }

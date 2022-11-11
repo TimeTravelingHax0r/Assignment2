@@ -1,6 +1,8 @@
 import java.io.File;
 import java.io.IOException;
+import java.util.Collection;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.Scanner;
 
@@ -13,6 +15,8 @@ import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
+
+
 
 // useful: https://www.youtube.com/watch?v=w3WibDOie1Y
 
@@ -33,8 +37,22 @@ public class GameManager {
 
     public void startGame() {
         System.out.println("Welcome to Deadwood!");
-        this.readXMLBoard("board.xml");
-        this.readXMLCards("cards.xml");
+        LinkedList<Object> boardData = this.readXMLBoard("board.xml");
+        LinkedList<SceneCard> cardData = this.readXMLCards("cards.xml");
+
+        LinkedList<Location> locations = (LinkedList<Location>) boardData.get(0);
+        HashMap<String, LinkedList<String>> connections = (HashMap<String, LinkedList<String>>) boardData.get(1);
+        Upgrades upgrades = (Upgrades) boardData.get(2);
+        Location trailer = new Location("trailer");
+        Location castingOffice = new Location("office");
+
+        this.board = new Board(locations, connections, upgrades, trailer, castingOffice);
+
+        LinkedList<Player> testList = new LinkedList<>();
+        testList.add(new Player("cool", 5, 0));
+        testList.add(new Player("dude", 0, 0));
+        WinSequence ws = new WinSequence(testList);
+        ws.setWinner();
     }
 
     private void setupGame() {
@@ -85,9 +103,11 @@ public class GameManager {
         }
     }
 
-    private void readXMLBoard(String infile) {
+    private LinkedList<Object> readXMLBoard(String infile) {
 
         LinkedList<Location> locations = new LinkedList<>();
+        HashMap<Integer, Integer> dollarCosts = new HashMap<>();
+        HashMap<Integer, Integer> creditCosts = new HashMap<>();
         HashMap<String, LinkedList<String>> connections = new HashMap<>();
         DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
         
@@ -176,6 +196,75 @@ public class GameManager {
                 }
             }
 
+            Node trailer = document.getElementsByTagName("trailer").item(0);
+            Node office = document.getElementsByTagName("office").item(0);
+            LinkedList<String> trailerNeighbors = new LinkedList<>();
+            LinkedList<String> officeNeighbors = new LinkedList<>();
+
+            if (trailer.getNodeType() == Node.ELEMENT_NODE) {
+
+                Element trailerElement = (Element) trailer;
+
+                Node neighbors = trailerElement.getElementsByTagName("neighbors").item(0);
+                Element neighsElement = (Element) neighbors;
+                NodeList neighList = neighsElement.getElementsByTagName("neighbor");
+                for (int j = 0; j < neighList.getLength(); ++j) {
+                    Node neighbor = neighList.item(j);
+                    if (neighbor.getNodeType() == Node.ELEMENT_NODE) {
+                        Element neighElement = (Element) neighbor;
+                        String currNeighName =  neighElement.getAttribute("name");
+                        trailerNeighbors.add(currNeighName);
+                    }
+                }
+            }
+
+            if (office.getNodeType() == Node.ELEMENT_NODE) {
+
+                Element officeElement = (Element) office;
+
+                Node neighbors = officeElement.getElementsByTagName("neighbors").item(0);
+                Element neighsElement = (Element) neighbors;
+                NodeList neighList = neighsElement.getElementsByTagName("neighbor");
+                for (int j = 0; j < neighList.getLength(); ++j) {
+                    Node neighbor = neighList.item(j);
+                    if (neighbor.getNodeType() == Node.ELEMENT_NODE) {
+                        Element neighElement = (Element) neighbor;
+                        String currNeighName =  neighElement.getAttribute("name");
+                        officeNeighbors.add(currNeighName);
+                    }
+                }
+
+                Node upgrades = officeElement.getElementsByTagName("upgrades").item(0);
+                Element upgradesElement = (Element) upgrades;
+                NodeList upgradeList = upgradesElement.getElementsByTagName("upgrade");
+                for (int j = 0; j < upgradeList.getLength(); ++j) {
+                    Node upgrade = upgradeList.item(j);
+                    if (upgrade.getNodeType() == Node.ELEMENT_NODE) {
+                        Element upgradeElement = (Element) upgrade;
+                        String currAttrType =  upgradeElement.getAttribute("currency");
+                        int level = Integer.parseInt(upgradeElement.getAttribute("level"));
+                        int amt = Integer.parseInt(upgradeElement.getAttribute("amt"));
+                        if (currAttrType.equals("dollar")) {
+                            dollarCosts.put(level, amt);
+                        } else if (currAttrType.equals("credit")) {
+                            creditCosts.put(level, amt);
+                        }
+                    }
+                }
+            }
+
+            connections.put("trailer", trailerNeighbors);
+            connections.put("office", officeNeighbors);
+
+            System.out.println("new stuff:");
+            for (String s : trailerNeighbors) {
+                System.out.println(s);
+            }
+
+            for (String s : officeNeighbors) {
+                System.out.println(s);
+            }
+
         } catch (ParserConfigurationException e) {
             e.printStackTrace();
         } catch (SAXException e) {
@@ -183,9 +272,16 @@ public class GameManager {
         } catch (IOException e) {
             e.printStackTrace();
         }
+
+        LinkedList<Object> returnList = new LinkedList<>();
+        returnList.add(locations);
+        returnList.add(connections);
+        returnList.add(new Upgrades(dollarCosts, creditCosts));
+
+        return returnList;
     }
 
-    private void readXMLCards(String infile) {
+    private LinkedList<SceneCard> readXMLCards(String infile) {
         
         LinkedList<SceneCard> cards = new LinkedList<>();
         DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
@@ -249,7 +345,6 @@ public class GameManager {
                     // }
 
                 }
-
             }
 
         } catch (ParserConfigurationException e) {
@@ -259,6 +354,8 @@ public class GameManager {
         } catch (IOException e) {
             e.printStackTrace();
         }
+
+        return cards;
     }
 
     private void gameLoop() {
