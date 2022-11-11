@@ -6,6 +6,7 @@ import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.Scanner;
 
+import javax.script.ScriptEngineManager;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
@@ -47,6 +48,8 @@ public class GameManager {
         Location castingOffice = new Location("office");
 
         this.board = new Board(locations, connections, upgrades, trailer, castingOffice);
+
+        this.gameLoop();
 
         // FOR DEBUGGING
 
@@ -365,13 +368,76 @@ public class GameManager {
         return cards;
     }
 
-    private void gameLoop() {
-
-    }
-
     private boolean processCmd(String cmd) {
 
-        return false;
+        Scanner tokenizer = new Scanner(cmd);
+        String mainCmd = tokenizer.next();
+
+        switch (mainCmd) {
+            case "active":          return this.activePlayer(cmd);
+
+            case "move":            return this.move(cmd);
+
+            case "where":           return this.where(cmd);
+
+            case "act":             return this.act();
+
+            case "rehearse":        return this.rehearse();
+
+            case "work":            return this.work(cmd);
+
+            case "end":             return this.end();
+
+            default:    System.out.println("error: unrecognized command.");
+                        return false;
+        }
+    }
+
+    private boolean activePlayer(String cmd) {
+        System.out.println("active");
+        return true;
+    }
+
+    private boolean move(String cmd) {
+        System.out.println("move");
+        return true;
+    }
+
+    private boolean where(String cmd) {
+        System.out.println("where");
+        return true;
+    }
+
+    private boolean act() {
+        System.out.println("act");
+        return true;
+    }
+
+    private boolean rehearse() {
+        System.out.println("rehearse");
+        return true;
+    }
+
+    private boolean work(String cmd) {
+        System.out.println("work");
+        return true;
+    }
+
+    private boolean end() {
+        System.out.println("end");
+        return true;
+    }
+
+    private void gameLoop() {
+        
+        Scanner input = new Scanner(System.in);
+        String cmd;
+        
+        while (true) {
+            System.out.print("> ");
+            cmd = input.nextLine();
+            processCmd(cmd);
+        }
     }
 
     private boolean startTurn() {
