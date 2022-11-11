@@ -1,33 +1,39 @@
 public class winSequence{
-	private int highScore = 0;
-	pirvate int winners = 0;
-	private int[] scores = new int[gameManagers.size()];
-	public winSequence(){
-		for(player i : players i){
-			scores[i] = players(i).getDollars + players(i).getCredits + (5 * players(i).getRank);
-			if(iscores[i]  == highScores){
-				winners++;
-			}elif (scores[i] > highscore){
-				Winners = 1;
-				highScore = scores[i]
-            }
-		}	
+	private int winners = 0;
+	
+	private int calcScore(LinkedList<Player>){
+		int highScore = 0;
+		for(Player i : players){
+			if((i.getDollars() + i.getCredits() + (5*i.getRank())) > highScore){
+				highScore = (i.getDollars() + i.getCredits() + (5*i.getRank());
+			}
+		}
+		return highScore;
 	}
-	if(winners > 1){
-	    System.out.print(“The winners are  “);
-    for(player i : players i){
-        if(i.getScore == highScore){
-	        System.out.println(i.getName + “ “);
-        }
-    }
-    System.out.println(“ with “ + highScore + “ points.”);
-}else{
-	System.out.print(“The winner is  “);
-    for(player i : players i){
-	    if(i.getScore == highScore){
-		    System.out.println(i.getName);
-        }
-    }
-    System.out.println(“ with “ +highScore + “ points.”);
+					     
+	private String getWinner(){
+		String[] winners;
+		int num = 0;
+		int highScore = calcScore();
+		for(Player i : players){
+			if((i.getDollars() + i.getCredits() + (5*i.getRank())) = highScore){
+				winners[num] = i.getName();
+				num++;
+			}	
+		}
+		if(winners.length > 1){
+			System.out.print("The winners are: ");
+			for(int j=0;j<winners.length;j++){
+				System.out.println(winners[j] + " ");	
+			}
+			 System.out.println(" with "+highScore+" points."
+		}else{
+			System.out.println("The winner is: "+winners[0]+" with "+highScore+" points.");
+		}
+	}
+					    
+	private void setWinner(){
+	}
+				     
 }
 
