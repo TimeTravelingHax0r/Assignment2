@@ -48,11 +48,16 @@ public class GameManager {
 
         this.board = new Board(locations, connections, upgrades, trailer, castingOffice);
 
-        LinkedList<Player> testList = new LinkedList<>();
-        testList.add(new Player("cool", 5, 0));
-        testList.add(new Player("dude", 0, 0));
-        WinSequence ws = new WinSequence(testList);
-        ws.setWinner();
+        // FOR DEBUGGING
+
+        // LinkedList<Player> playersList = new LinkedList<>();
+        // playersList.add(new Player("cool", 1, 3));
+        // playersList.add(new Player("dude", 2, 1));
+        // playersList.add(new Player("bro", 1, 6));
+        // playersList.add(new Player("bro2", 1, 6));
+        // WinSequence ws = new WinSequence(playersList);
+        // ws.activate();
+
     }
 
     private void setupGame() {
@@ -256,14 +261,16 @@ public class GameManager {
             connections.put("trailer", trailerNeighbors);
             connections.put("office", officeNeighbors);
 
-            System.out.println("new stuff:");
-            for (String s : trailerNeighbors) {
-                System.out.println(s);
-            }
+            // FOR DEBUGGING
 
-            for (String s : officeNeighbors) {
-                System.out.println(s);
-            }
+            // System.out.println("new stuff:");
+            // for (String s : trailerNeighbors) {
+            //     System.out.println(s);
+            // }
+
+            // for (String s : officeNeighbors) {
+            //     System.out.println(s);
+            // }
 
         } catch (ParserConfigurationException e) {
             e.printStackTrace();

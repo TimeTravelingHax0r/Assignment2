@@ -1,51 +1,79 @@
+import java.util.HashMap;
 import java.util.LinkedList;
+
 public class WinSequence {
 
 	private LinkedList<Player> players;
-	private String[] winners;
 
 	public WinSequence(LinkedList<Player> players) {
 		this.players = players;
-		this.winners = new String[players.size()];
+	}
+
+	public void activate() {
+
+		HashMap<Player, Integer> playerScores = calcScore(this.players);
+		LinkedList<Player> winners = getWinners(playerScores);
+		this.displayWinner(winners, playerScores);
 	}
 	
-	private int calcScore(LinkedList<Player> players){
-		int highScore = 0;
-		for(Player i : players){
-			if((i.getDollars() + i.getCredits() + (5*i.getRank())) > highScore){
-				highScore = (i.getDollars() + i.getCredits() + (5*i.getRank()));
+	private HashMap<Player, Integer> calcScore(LinkedList<Player> players){
+		
+		HashMap<Player, Integer> playerScores = new HashMap<>();
+		
+		for(Player player : players){
+
+			int score = player.getDollars();
+			score += player.getCredits();
+			score += player.getRank() * 5;
+
+			playerScores.put(player, score);
+		}
+
+		return playerScores;
+	}
+
+	private LinkedList<Player> getWinners(HashMap<Player, Integer> playerScores){
+		
+		int highestScore = 0;
+		LinkedList<Player> winners = new LinkedList<>();
+
+		for (int score : playerScores.values()) {
+			if (score > highestScore) {
+				highestScore = score;
 			}
 		}
-		return highScore;
-	}
-					     
-	public String[] getWinner(LinkedList<Player> players){
-		return this.winners;
-	}
-					    
-	public void setWinner() {
-		int num = 0;
-		int highScore = calcScore(this.players);
-		for(Player i : this.players){
-			if((i.getDollars() + i.getCredits() + (5*i.getRank())) == highScore){
-				winners[num] = i.getName();
-				num++;
-			}	
-		}
-		if(this.winners.length > 1){
-			System.out.print("The winners are: ");
-			for(int j=0;j<this.winners.length;j++){
 
-				System.out.println(this.winners[j] + " ");	
-
+		for (Player player : playerScores.keySet()) {
+			if (playerScores.get(player) == highestScore) {
+				winners.add(player);
 			}
+		}
 
-			System.out.println(" with " + highScore + " points.");
+		return winners;
+	}
 
+	private void displayWinner(LinkedList<Player> winners, HashMap<Player, Integer> playerScores) {
+		if (winners.size() == 1) {
+			System.out.println("The winner is " + winners.get(0).getName() + "! With a score of " + playerScores.get(winners.get(0)) + "!");
 		} else {
-			System.out.println("The winner is: "+this.winners[0]+" with "+highScore+" points.");
-		}   
+			System.out.print("The winners are ");
+
+			for (int i = 0; i < winners.size(); ++i) {
+
+				if (i != (winners.size()-1)) {
+					System.out.print(winners.get(i).getName());
+					System.out.print(", ");
+				} else {
+					System.out.print("and ");
+					System.out.print(winners.get(i).getName());
+				}
+			}
+
+			System.out.println("!");
+			System.out.println("With scores of " + playerScores.get(winners.get(0)));
+
+			System.exit(0);
+		}
 	}
-				     
 }
 
