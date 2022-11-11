@@ -1,5 +1,6 @@
 import java.io.File;
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Scanner;
 
@@ -32,7 +33,8 @@ public class GameManager {
 
     public void startGame() {
         System.out.println("Welcome to Deadwood!");
-        this.readXML("board.xml");
+        this.readXMLBoard("board.xml");
+        this.readXMLCards("cards.xml");
     }
 
     private void setupGame() {
@@ -83,8 +85,10 @@ public class GameManager {
         }
     }
 
-    private void readXML(String infile) {
+    private void readXMLBoard(String infile) {
 
+        LinkedList<Location> locations = new LinkedList<>();
+        HashMap<String, LinkedList<String>> connections = new HashMap<>();
         DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
         
         try {
@@ -103,22 +107,72 @@ public class GameManager {
                 if (set.getNodeType() == Node.ELEMENT_NODE) {
 
                     Element setElement = (Element) set;
-                    System.out.println("Set name " + setElement.getAttribute("name"));
 
-                    NodeList children = set.getChildNodes();
+                    String currName = setElement.getAttribute("name");
 
-                    for (int j = 0; j < children.getLength(); ++j) {
+                    System.out.println("Set name " + currName);
 
-                        Node child = children.item(i);
-
-                        if (child.getNodeType() == Node.ELEMENT_NODE) {
-                            
-                            Element childElement = (Element) child;
-
-                            System.out.println(childElement.getTagName());
+                    Node neighbors = setElement.getElementsByTagName("neighbors").item(0);
+                    Element neighsElement = (Element) neighbors;
+                    NodeList neighList = neighsElement.getElementsByTagName("neighbor");
+                    LinkedList<String> neighborsList = new LinkedList<>();
+                    for (int j = 0; j < neighList.getLength(); ++j) {
+                        Node neighbor = neighList.item(j);
+                        if (neighbor.getNodeType() == Node.ELEMENT_NODE) {
+                            Element neighElement = (Element) neighbor;
+                            String currNeighName =  neighElement.getAttribute("name");
+                            neighborsList.add(currNeighName);
                         }
-
                     }
+
+                    Node takes = setElement.getElementsByTagName("takes").item(0);
+                    Element takesElement = (Element) takes;
+                    NodeList takeList = takesElement.getElementsByTagName("take");
+                    int highestTake = 0;
+                    for (int j = 0; j < takeList.getLength(); ++j) {
+                        Node take = takeList.item(j);
+                        if (take.getNodeType() == Node.ELEMENT_NODE) {
+                            Element takeElement = (Element) take;
+                            String currTake = takeElement.getAttribute("number");
+                            int currTakeInt = Integer.parseInt(currTake);
+                            if (currTakeInt > highestTake) {
+                                highestTake = currTakeInt;
+                            }
+                        }
+                    }
+
+                    Node parts = setElement.getElementsByTagName("parts").item(0);
+                    Element partsElement = (Element) parts;
+                    NodeList partList = partsElement.getElementsByTagName("part");
+                    LinkedList<Role> roles = new LinkedList<>();
+                    for (int j = 0; j < partList.getLength(); ++j) {
+                        Node part = partList.item(j);
+                        if (part.getNodeType() == Node.ELEMENT_NODE) {
+                            Element partElement = (Element) part;
+                            String partName = partElement.getAttribute("name");
+                            int level = Integer.parseInt(partElement.getAttribute("level"));
+                            String currLine = partElement.getElementsByTagName("line").item(0).getTextContent();
+                            roles.add(new Role(partName, level, currLine));
+                        }
+                    }
+
+                    Location currLocation = new Location(currName, roles, highestTake);
+                    locations.add(currLocation);
+                    connections.put(currName, neighborsList);
+
+                    // FOR DEBUGGING
+
+                    // for (String s : neighborsList) {
+                    //     System.out.println(s);
+                    // }
+
+                    // System.out.println(highestTake);
+
+                    // for (Role r : roles) {
+                    //     System.out.println("Role name: " + r.getRoleName());
+                    //     System.out.println("Role num: " + r.getDiceNum());
+                    //     System.out.println("Role line: " + r.getCatch());
+                    // }
                 }
             }
 
@@ -129,7 +183,82 @@ public class GameManager {
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
 
+    private void readXMLCards(String infile) {
+        
+        LinkedList<SceneCard> cards = new LinkedList<>();
+        DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+        
+        try {
+
+            DocumentBuilder builder = factory.newDocumentBuilder();
+
+            Document document = builder.parse(new File(infile));
+
+            document.getDocumentElement().normalize();
+
+            NodeList cardList = document.getElementsByTagName("card");
+            for (int i = 0; i < cardList.getLength(); ++i) {
+                
+                Node card = cardList.item(i);
+
+                if (card.getNodeType() == Node.ELEMENT_NODE) {
+
+                    Element cardElement = (Element) card;
+
+                    String cardName = cardElement.getAttribute("name");
+                    int budget = Integer.parseInt(cardElement.getAttribute("budget"));
+
+                    Node sceneNode = cardElement.getElementsByTagName("scene").item(0);
+                    String sceneDesc = sceneNode.getTextContent();
+                    int sceneNum = 0;
+
+                    if (sceneNode.getNodeType() == Node.ELEMENT_NODE) {
+                        Element sceneElement = (Element) sceneNode;
+                        sceneNum = Integer.parseInt(sceneElement.getAttribute("number"));
+                    }
+
+                    NodeList partList = cardElement.getElementsByTagName("part");
+                    LinkedList<Role> roles = new LinkedList<>();
+                    for (int j = 0; j < partList.getLength(); ++j) {
+                        Node part = partList.item(j);
+                        if (part.getNodeType() == Node.ELEMENT_NODE) {
+                            Element partElement = (Element) part;
+                            String partName = partElement.getAttribute("name");
+                            int level = Integer.parseInt(partElement.getAttribute("level"));
+                            String currLine = partElement.getElementsByTagName("line").item(0).getTextContent();
+                            roles.add(new Role(partName, level, currLine));
+                        }
+                    }
+
+                    SceneCard currCard = new SceneCard(cardName, budget, sceneNum, sceneDesc, roles);
+                    cards.add(currCard);
+
+                    // FOR DEBUGGING 
+
+                    // System.out.println("name: " + cardName);
+                    // System.out.println("budget: " + budget);
+                    // System.out.println("scenenum: "+ sceneNum);
+                    // System.out.println("desc: " + sceneDesc);
+
+                    // for (Role r : roles) {
+                    //     System.out.println("Role name: " + r.getRoleName());
+                    //     System.out.println("Role num: " + r.getDiceNum());
+                    //     System.out.println("Role line: " + r.getCatch());
+                    // }
+
+                }
+
+            }
+
+        } catch (ParserConfigurationException e) {
+            e.printStackTrace();
+        } catch (SAXException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     private void gameLoop() {

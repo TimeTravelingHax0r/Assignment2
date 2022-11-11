@@ -27,7 +27,8 @@ public class Board {
     }
 
     public Location getCasting() {
-        return new Location();
+        int[] test = {1,2,3};
+        return new Location("", new SceneCard("", 5, new LinkedList<Role>()), new LinkedList<Role>(), test);
     }
 
     public Location getTrailer() {

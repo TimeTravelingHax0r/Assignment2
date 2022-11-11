@@ -4,13 +4,16 @@ public class Location {
     private String name;
     private SceneCard card;
     public LinkedList<Role> offCardRoles;
-    int[] shots;
+    private int totalShots;
 
-    public Location(String name, SceneCard card, LinkedList<Role> offCardRoles, int[] shots) {
+    public Location(String name, LinkedList<Role> offCardRoles, int shots) {
         this.name = name;
-        this.card = card;
         this.offCardRoles = offCardRoles;
-        this.shots = shots;
+        this.totalShots = shots;
+    }
+
+    public void setCard(SceneCard cart) {
+        this.card = card;
     }
 
     public int getBudget() {
@@ -26,7 +29,7 @@ public class Location {
     }
 
     public String getName() {
-        return this.sceneName;
+        return this.name;
     }
 
     public void takeRole() {
@@ -50,7 +53,7 @@ public class Location {
 
         Location otherLoc = (Location) o;
 
-        if (this.sceneName.equals(otherLoc.getName())) {
+        if (this.name.equals(otherLoc.getName())) {
             return true;
         } else {
             return false;
