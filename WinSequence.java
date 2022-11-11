@@ -1,5 +1,5 @@
 public class winSequence{
-	private int winners = 0;
+	private String[] winners;
 	
 	private int calcScore(LinkedList<Player> players){
 		int highScore = 0;
@@ -11,7 +11,11 @@ public class winSequence{
 		return highScore;
 	}
 					     
-	private String getWinner(LinkedList<Player> players){
+	private String[] getWinner(LinkedList<Player> players){
+		return this.winners;
+	}
+					    
+	private void setWinner(LinkedList<Player> players){
 		String[] winners;
 		int num = 0;
 		int highScore = calcScore(players);
@@ -30,9 +34,7 @@ public class winSequence{
 		}else{
 			System.out.println("The winner is: "+winners[0]+" with "+highScore+" points.");
 		}
-	}
-					    
-	private void setWinner(){
+		this.winners = winners;		    
 	}
 				     
 }
