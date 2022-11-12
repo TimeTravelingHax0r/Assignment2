@@ -4,14 +4,16 @@ public class Player {
     private int practiceChips;
     private PlayerDice dice;
     private String name;
+    private String gender;
     private Location currLocation;
 
-    public Player(String name, int startRank, int startCredits) {
+    public Player(String name, int startRank, int startCredits, String gender) {
         this.name = name;
         this.dollars = 0;
         this.credits = startCredits;
         this.practiceChips = 0;
         this.dice = new PlayerDice();
+        this.gender = gender;
         dice.updateRank(startRank);
     }
 
@@ -37,6 +39,10 @@ public class Player {
 
     public int getRank() {
         return dice.getRank();
+    }
+
+    public String getGender() {
+        return this.gender;
     }
 
     public boolean updateCredit(int amount) {

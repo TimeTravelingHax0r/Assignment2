@@ -24,6 +24,7 @@ import org.xml.sax.SAXException;
 public class GameManager {
     private Board board;
     private LinkedList<Player> players;
+    private Player activePlayer;
     private int numPlayers;
     private int maxDays;
     private int startCredits;
@@ -48,6 +49,8 @@ public class GameManager {
         Location castingOffice = new Location("office");
 
         this.board = new Board(locations, connections, upgrades, trailer, castingOffice);
+
+        this.setupGame();
 
         this.gameLoop();
 
@@ -101,7 +104,26 @@ public class GameManager {
                 for (int i = 0; i < this.numPlayers; ++i) {
                     System.out.print("Please enter the name of player " + (i+1) + ":");
                     String currPlayer = this.scan.next();
-                    this.players.add(new Player(currPlayer, this.startRank, this.startCredits));
+                    System.out.println("Please enter the gender of [" + currPlayer + "] [M/F/GN]:");
+                    String genderChoice = this.scan.next();
+
+                    while (genderChoice.equals("M") && genderChoice.equals("F") && genderChoice.equals("GN")){
+                        System.out.println("Invalid selection, please try again.");
+                        System.out.println("Please enter the gender of [" + currPlayer + "] [M/F/GN]:");
+                        genderChoice = this.scan.next();
+                    }
+
+                    String playerGender;
+                    switch (genderChoice) {
+                        case "M":   playerGender = "He";
+                                    break;
+                        case "F":   playerGender = "She";
+                                    break;
+                        case "GN":  playerGender = "They";
+                                    break;
+                    }
+
+                    this.players.add(new Player(currPlayer, this.startRank, this.startCredits, genderChoice));
                 }
             }
 
@@ -394,7 +416,15 @@ public class GameManager {
     }
 
     private boolean activePlayer(String cmd) {
-        System.out.println("active");
+        
+        String activePlayerName = this.activePlayer.getName();
+        String activePlayerGender = this.activePlayer.getGender();
+        int activePlayerDollars = this.activePlayer.getDollars();
+        int activePlayerCredits = this.activePlayer.getCredits();
+        
+        System.out.print("The active player is " + activePlayerName + ". ");
+        System.out.print(activePlayerGender + " has $" + activePlayerDollars + ", ");
+        System.out.print(activePlayerCredits + " credits.");
         return true;
     }
 
