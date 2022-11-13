@@ -3,6 +3,7 @@ class Role {
     private int diceNum;
     private String catchPhrase;
     private boolean roleTaken;
+    private Player herePlayer;
 
     public Role(String name, int diceNum, String catchPhrase) {
         this.name = name;
@@ -23,12 +24,20 @@ class Role {
         return this.catchPhrase;
     }
 
-    public void takeRole() {
-        this.roleTaken = true;
+    public boolean takeRole(Player player) {
+        if (!this.roleTaken) {
+            this.herePlayer = player;
+            this.roleTaken = true;
+            return true;
+        } else {
+            System.out.println("Role already taken.");
+            return false;
+        }
     }
 
     public void finishRole() {
         this.roleTaken = false;
+        this.herePlayer = null;
     }
 
 }

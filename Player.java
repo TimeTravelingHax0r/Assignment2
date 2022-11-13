@@ -6,6 +6,8 @@ public class Player {
     private String name;
     private String gender;
     private Location currLocation;
+    private boolean workingRole;
+    private Role currRole;
 
     public Player(String name, int startRank, int startCredits, String gender) {
         this.name = name;
@@ -14,6 +16,7 @@ public class Player {
         this.practiceChips = 0;
         this.dice = new PlayerDice();
         this.gender = gender;
+        this.workingRole = false;
         dice.updateRank(startRank);
     }
 
@@ -43,6 +46,24 @@ public class Player {
 
     public String getGender() {
         return this.gender;
+    }
+
+    public void changeRole(Role role) {
+        this.workingRole = true;
+        this.currRole = role;
+    }
+
+    public void removeRole() {
+        this.workingRole = false;
+        this.currRole = null;
+    }
+
+    public Role currRole() {
+        return this.currRole;
+    }
+
+    public boolean workingRole() {
+        return this.workingRole;
     }
 
     public boolean updateCredit(int amount) {
@@ -91,5 +112,6 @@ public class Player {
 
     public void movePlayer(Location newLocation) {
         this.currLocation = newLocation;
+        this.removeRole();
     }
 }

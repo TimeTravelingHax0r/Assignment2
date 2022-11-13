@@ -15,6 +15,18 @@ public class SceneCard {
         this.roles = roles;
     }
 
+    public String getName() {
+        return this.name;
+    }
+
+    public String getDesc() {
+        return this.sceneDesc;
+    }
+
+    public int getNum() {
+        return this.sceneNum;
+    }
+
     public int getBudget() {
         return this.budget;
     }

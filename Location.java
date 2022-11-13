@@ -3,6 +3,7 @@ import java.util.LinkedList;
 public class Location {
     private String name;
     private SceneCard card;
+    private boolean sceneAvailable;
     public LinkedList<Role> offCardRoles;
     private int totalShots;
     private boolean isSpecial; // used for trailer, casting office
@@ -10,6 +11,7 @@ public class Location {
     public Location(String name, LinkedList<Role> offCardRoles, int shots) {
         this.name = name;
         this.offCardRoles = offCardRoles;
+        this.sceneAvailable = true;
         this.totalShots = shots;
         this.isSpecial = false;
     }
@@ -55,8 +57,37 @@ public class Location {
         }
     }
 
-    public void takeRole() {
-        // implement later
+    public boolean takeRole(Player player, String roleName) {
+        
+        if (!this.isSpecial) {
+            Role playerRole = null;
+        
+            for (Role role : this.offCardRoles) {
+                if (role.getRoleName().equals(roleName)) {
+                    playerRole = role;
+                }
+            }
+
+            for (Role role : this.card.getRoles()) {
+                if (role.getRoleName().equals(roleName)) {
+                    playerRole = role;
+                }
+            }
+
+            if (playerRole != null) {
+                return playerRole.takeRole(player);
+            } else {
+                System.out.println("error: no role found.");
+                return false;
+            }
+        } else {
+            System.out.println("Cannot take role on this location [" + this.name + "].");
+            return false;
+        }
+    }
+
+    public boolean sceneAvailable() {
+        return this.sceneAvailable;
     }
 
     @Override

@@ -4,6 +4,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
+import java.util.Random;
 import java.util.Scanner;
 
 import javax.script.ScriptEngineManager;
@@ -17,8 +18,6 @@ import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
 
-
-
 // useful: https://www.youtube.com/watch?v=w3WibDOie1Y
 
 public class GameManager {
@@ -26,15 +25,19 @@ public class GameManager {
     private LinkedList<Player> players;
     private Player activePlayer;
     private int numPlayers;
+    private int activeIndex;
     private int maxDays;
+    private int scenesUsed;
     private int startCredits;
     private int startRank;
     private int day;
+    private boolean moveUsed;
     private WinSequence activateWin;
     private Scanner scan;
 
     public GameManager() {
         this.scan = new Scanner(System.in);
+        this.players = new LinkedList<>();
     }
 
     public void startGame() {
@@ -48,9 +51,14 @@ public class GameManager {
         Location trailer = new Location("trailer");
         Location castingOffice = new Location("office");
 
-        this.board = new Board(locations, connections, upgrades, trailer, castingOffice);
+        this.board = new Board(locations, connections, cardData, upgrades, trailer, castingOffice);
+        board.setCards();
 
         this.setupGame();
+
+        Random rand = new Random();
+        this.activeIndex = rand.nextInt(this.players.size());
+        this.activePlayer = players.get(this.activeIndex);
 
         this.gameLoop();
 
@@ -67,7 +75,7 @@ public class GameManager {
     }
 
     private void setupGame() {
-        System.out.println("Please enter the number of players");
+        System.out.println("Please enter the number of players: ");
         this.numPlayers = Integer.parseInt(scan.nextLine());
 
         if (2 <= this.numPlayers && this.numPlayers <= 8) {
@@ -100,31 +108,35 @@ public class GameManager {
                         this.startCredits = 0;
                         this.startRank = 2;
                 default: System.out.println("Unrecognized player amount!");
+            }
 
-                for (int i = 0; i < this.numPlayers; ++i) {
-                    System.out.print("Please enter the name of player " + (i+1) + ":");
-                    String currPlayer = this.scan.next();
-                    System.out.println("Please enter the gender of [" + currPlayer + "] [M/F/GN]:");
-                    String genderChoice = this.scan.next();
+            for (int i = 0; i < this.numPlayers; ++i) {
+                System.out.print("Please enter the name of player " + (i+1) + ": ");
+                String currPlayer = this.scan.next();
+                System.out.println("Please enter the gender of [" + currPlayer + "] [M/F/GN]: ");
+                String genderChoice = this.scan.next();
 
-                    while (genderChoice.equals("M") && genderChoice.equals("F") && genderChoice.equals("GN")){
-                        System.out.println("Invalid selection, please try again.");
-                        System.out.println("Please enter the gender of [" + currPlayer + "] [M/F/GN]:");
-                        genderChoice = this.scan.next();
-                    }
-
-                    String playerGender;
-                    switch (genderChoice) {
-                        case "M":   playerGender = "He";
-                                    break;
-                        case "F":   playerGender = "She";
-                                    break;
-                        case "GN":  playerGender = "They";
-                                    break;
-                    }
-
-                    this.players.add(new Player(currPlayer, this.startRank, this.startCredits, genderChoice));
+                while ((!genderChoice.equals("M") && !genderChoice.equals("F")) && !genderChoice.equals("GN")){
+                    System.out.println("Invalid selection, please try again.");
+                    System.out.println("Please enter the gender of [" + currPlayer + "] [M/F/GN]: ");
+                    genderChoice = this.scan.next();
                 }
+
+                String playerGender;
+                switch (genderChoice) {
+                    case "M":   playerGender = "He";
+                                break;
+                    case "F":   playerGender = "She";
+                                break;
+                    case "GN":
+                    default:    playerGender = "They";
+                                break;
+                }
+
+                Player tempPlayer = new Player(currPlayer, this.startRank, this.startCredits, playerGender);
+                tempPlayer.movePlayer(board.getTrailer());
+
+                this.players.add(tempPlayer);
             }
 
         } else {
@@ -159,8 +171,6 @@ public class GameManager {
                     Element setElement = (Element) set;
 
                     String currName = setElement.getAttribute("name");
-
-                    System.out.println("Set name " + currName);
 
                     Node neighbors = setElement.getElementsByTagName("neighbors").item(0);
                     Element neighsElement = (Element) neighbors;
@@ -390,52 +400,106 @@ public class GameManager {
         return cards;
     }
 
-    private boolean processCmd(String cmd) {
+    private void processCmd(String cmd) {
 
         Scanner tokenizer = new Scanner(cmd);
         String mainCmd = tokenizer.next();
 
         switch (mainCmd) {
-            case "active":          return this.activePlayer(cmd);
+            case "active":          this.activePlayer(cmd);
+                                    break;
 
-            case "move":            return this.move(cmd);
+            case "move":            this.move(cmd);
+                                    break;
 
-            case "where":           return this.where(cmd);
+            case "where":           this.where(cmd);
+                                    break;
 
-            case "act":             return this.act();
+            case "act":             this.act();
+                                    break;
 
-            case "rehearse":        return this.rehearse();
+            case "rehearse":        this.rehearse();
+                                    break;
 
-            case "work":            return this.work(cmd);
+            case "work":            this.work(cmd);
+                                    return;
 
-            case "end":             return this.end();
+            case "end":             this.end();
+                                    return;
 
             default:    System.out.println("error: unrecognized command.");
-                        return false;
         }
     }
 
-    private boolean activePlayer(String cmd) {
+    private void activePlayer(String cmd) {
         
         String activePlayerName = this.activePlayer.getName();
         String activePlayerGender = this.activePlayer.getGender();
         int activePlayerDollars = this.activePlayer.getDollars();
         int activePlayerCredits = this.activePlayer.getCredits();
+    
+        String haveConj = activePlayerGender.equals("They") ? "have" : "has";
+        String isConj = activePlayerGender.equals("They") ? "are" : "is";
         
         System.out.print("The active player is " + activePlayerName + ". ");
-        System.out.print(activePlayerGender + " has $" + activePlayerDollars + ", ");
-        System.out.print(activePlayerCredits + " credits.");
-        return true;
+        System.out.print(activePlayerGender + " " + haveConj +" $" + activePlayerDollars + ", ");
+        System.out.print(activePlayerCredits + " credits. ");
+        if (activePlayer.workingRole()) {
+
+            Role activePlayerRole = this.activePlayer.currRole();
+            String roleName = activePlayerRole.getRoleName();
+            String catchPhrase = activePlayerRole.getCatch();
+
+            System.out.print(activePlayerGender + " " + isConj +" playing " + activePlayerRole + ", ");
+            System.out.println("\"" + catchPhrase + "\"");
+
+        } else {
+
+            String playerLoc = this.activePlayer.getLocation().getName();
+
+            System.out.println(activePlayerGender + " " + isConj + " at " + playerLoc + ".");
+
+        }
     }
 
-    private boolean move(String cmd) {
-        System.out.println("move");
-        return true;
+    private void move(String cmd) {
+
+        if (this.activePlayer.workingRole()) {
+            System.out.println("cannot move while working role.");
+        }
+        else if (!this.moveUsed) {
+            Scanner tokenizer = new Scanner(cmd);
+            tokenizer.next();
+            String newLocation = tokenizer.nextLine().substring(1);
+
+            if (this.board.moveLegal(this.activePlayer, newLocation)) {
+                movePlayer(this.activePlayer, board.getLocation(newLocation));
+                this.moveUsed = true;
+            } else {
+                System.out.println("move not legal.");
+            }
+        } else {
+            System.out.println("move already used.");
+        }
     }
 
-    private boolean where(String cmd) {
-        System.out.println("where");
-        return true;
+    private void where(String cmd) {
+        Location playerLoc = this.activePlayer.getLocation();
+
+        String placeName = playerLoc.getName();
+
+        if (playerLoc.sceneAvailable()) {
+
+            SceneCard card = playerLoc.getCard();
+            String sceneName = card.getName();
+            int sceneNum = card.getNum();
+            
+            System.out.println("in " + placeName + " shooting " + sceneName + " scene " + sceneNum );
+        } else if (placeName.equals("trailer") || placeName.equals("office")) {
+            System.out.println(placeName);
+        } else {
+            System.out.println(placeName + " wrapped");
+        }
     }
 
     private boolean act() {
@@ -453,33 +517,43 @@ public class GameManager {
         return true;
     }
 
-    private boolean end() {
-        System.out.println("end");
-        return true;
+    private void end() {
+        this.finishTurn();
     }
 
     private void gameLoop() {
         
         Scanner input = new Scanner(System.in);
         String cmd;
+        this.day = 0;
         
-        while (true) {
-            System.out.print("> ");
-            cmd = input.nextLine();
-            processCmd(cmd);
+        for (int currDay = 0; currDay < this.maxDays; ++currDay) {
+
+            while (true) {
+                System.out.print("> ");
+                cmd = input.nextLine();
+                processCmd(cmd);
+
+                if (this.scenesUsed == 9) {
+                    break;
+                }
+            }
         }
     }
 
-    private boolean startTurn() {
-        return true;
-    }
+    private void finishTurn() {
+        int newActiveIndex = this.activeIndex + 1;
+        if (newActiveIndex == players.size()) {
+            newActiveIndex = 0;
+        }
 
-    private boolean finishTurn() {
-        return true;
+        this.activeIndex = newActiveIndex;
+        this.activePlayer = this.players.get(this.activeIndex);
+        this.moveUsed = false;
     } 
 
-    private boolean movePlayer(Player player, Location location) {
-        return true;
+    private void movePlayer(Player player, Location location) {
+        player.movePlayer(location);
     }
 
     private boolean work(Player player, String type) {
