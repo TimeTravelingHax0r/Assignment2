@@ -549,9 +549,9 @@ public class GameManager {
             if (currRole.onCard()) {
                 
                 if (roll >= currBudget) {
-                    currLocation.takeCounter(this.activePlayer);
-                    this.activePlayer.updateCredit(2);
                     System.out.println("success! you got $2 credits");
+                    this.wrapped(currLocation.takeCounter(this.activePlayer));
+                    this.activePlayer.updateCredit(2);
                 } else {
                     System.out.println("fail! you get nothing");
                 }
@@ -561,10 +561,10 @@ public class GameManager {
             } else {
                 
                 if (roll >= currBudget) {
-                    currLocation.takeCounter(this.activePlayer);
+                    System.out.println("success! you got 1$ and 1 credit");
+                    this.wrapped(currLocation.takeCounter(this.activePlayer));
                     this.activePlayer.updateDollars(1);
                     this.activePlayer.updateCredit(1);
-                    System.out.println("success! you got 1$ and 1 credit");
                 } else {
                     this.activePlayer.updateDollars(1);
                     System.out.println("fail! you only get $1");
@@ -591,7 +591,11 @@ public class GameManager {
         workLegal = workLegal && this.activePlayer.workingRole();
         
         if (workLegal && !worked) {
-            this.activePlayer.incrementPracitce();
+            if (this.activePlayer.incrementPracitce()) {
+                this.worked = true;
+            } else {
+                this.worked = false;
+            }
         } else if (!workLegal && !worked) {
             System.out.println("cannot work here");
         } else if (workLegal && worked) {
@@ -603,14 +607,7 @@ public class GameManager {
     }
 
     private void end() {
-
-        String locName = this.activePlayer.getLocation().getName();
-
-        if (worked || locName.equals("trailer") || locName.equals("office")) {
-            this.finishTurn();
-        } else {
-            System.out.println("cannot end turn until worked");
-        }
+        this.finishTurn();
     }
 
     private void gameLoop() {
@@ -627,6 +624,7 @@ public class GameManager {
                 processCmd(cmd);
 
                 if (this.scenesUsed == 9) {
+                    this.scenesUsed = 0;
                     break;
                 }
             }
@@ -663,6 +661,12 @@ public class GameManager {
 
     private int calcPayerout(Player player, boolean onCard) {
         return 0;
+    }
+
+    private void wrapped(boolean isWrapped) {
+        if (isWrapped) {
+            this.scenesUsed++;
+        }
     }
 
     private void win() {

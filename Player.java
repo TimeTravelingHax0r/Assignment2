@@ -96,11 +96,13 @@ public class Player {
         return this.practiceChips;
     }
 
-    public void incrementPracitce() {
+    public boolean incrementPracitce() {
         if (this.practiceChips == 5) {
             System.out.println("Maximum chips reached");
+            return false;
         } else {
             this.practiceChips++;
+            return true;
         }
     }
 

@@ -18,6 +18,7 @@ public class Location {
         this.offCardRoles = offCardRoles;
         this.sceneAvailable = true;
         this.totalShots = shots;
+        this.shotsLeft = this.totalShots;
         this.isSpecial = false;
     }
 
@@ -94,15 +95,19 @@ public class Location {
         this.sceneAvailable = true;
     }
 
-    public void takeCounter(Player activePlayer) {
+    public boolean takeCounter(Player activePlayer) {
         if (this.shotsLeft == 1) {
             this.wrapScene(activePlayer);
+            return true;
         } else {
             this.shotsLeft--;
+            return false;
         }
     }
 
     private void wrapScene(Player activePlayer) {
+
+        System.out.println("The scene " + this.card.getName() + " is wrapped!");
 
         int currBudget = this.getBudget();
         LinkedList<Integer> diceRolls = activePlayer.rollDice(currBudget);
@@ -123,7 +128,13 @@ public class Location {
             Role currRole = roleValues.get(sortedKeys.get(key));
             Player currPlayer = currRole.getPlayer();
             if (currPlayer != null) {
-                currPlayer.updateDollars(diceRolls.get(roll));
+
+                String currName = currPlayer.getName();
+                int award = diceRolls.get(roll);
+
+                System.out.println(currName + " is awarded $" + award + "!");
+
+                currPlayer.updateDollars(award);
             }
 
             if (key+1 == sortedKeys.size()) {
@@ -140,19 +151,28 @@ public class Location {
             Player currPlayer = role.getPlayer();
 
             if (currPlayer != null) {
-                currPlayer.updateDollars(role.getDiceNum());
+
+                String currName = currPlayer.getName();
+                int award = role.getDiceNum();
+
+                System.out.println(currName + " is awarded $" + award + "!");
+                currPlayer.updateDollars(award);
             }
         }
 
         for (Role role : rolesOnCard) {
             Player currPlayer = role.getPlayer();
-            currPlayer.removeRole();
+            if (currPlayer != null) {
+                currPlayer.removeRole();
+            }
             role.finishRole();
         }
 
         for (Role role : this.offCardRoles) {
             Player currPlayer = role.getPlayer();
-            currPlayer.removeRole();
+            if (currPlayer != null) {
+                currPlayer.removeRole();
+            }
             role.finishRole();
         }
 
