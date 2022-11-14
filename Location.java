@@ -1,4 +1,8 @@
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.LinkedList;
+import java.util.List;
 
 public class Location {
     private String name;
@@ -6,6 +10,7 @@ public class Location {
     private boolean sceneAvailable;
     public LinkedList<Role> offCardRoles;
     private int totalShots;
+    private int shotsLeft;
     private boolean isSpecial; // used for trailer, casting office
 
     public Location(String name, LinkedList<Role> offCardRoles, int shots) {
@@ -57,7 +62,7 @@ public class Location {
         }
     }
 
-    public boolean takeRole(Player player, String roleName) {
+    public void takeRole(Player player, String roleName) {
         
         if (!this.isSpecial) {
             Role playerRole = null;
@@ -75,43 +80,86 @@ public class Location {
             }
 
             if (playerRole != null) {
-                return playerRole.takeRole(player);
+                playerRole.takeRole(player);
             } else {
                 System.out.println("error: no role found.");
-                return false;
             }
         } else {
             System.out.println("Cannot take role on this location [" + this.name + "].");
-            return false;
         }
+    }
+
+    public void resetScene() {
+        this.shotsLeft = this.totalShots;
+        this.sceneAvailable = true;
+    }
+
+    public void takeCounter(Player activePlayer) {
+        if (this.shotsLeft == 1) {
+            this.wrapScene(activePlayer);
+        } else {
+            this.shotsLeft--;
+        }
+    }
+
+    private void wrapScene(Player activePlayer) {
+
+        int currBudget = this.getBudget();
+        LinkedList<Integer> diceRolls = activePlayer.rollDice(currBudget);
+        Collections.sort(diceRolls, Collections.reverseOrder());
+        LinkedList<Role> rolesOnCard = this.card.getRoles();
+        HashMap<Integer, Role> roleValues = new HashMap<>();
+
+        for (Role role : rolesOnCard) {
+            roleValues.put(role.getDiceNum(), role);
+        }
+
+        LinkedList<Integer> sortedKeys = new LinkedList<>(roleValues.keySet());
+        Collections.sort(sortedKeys, Collections.reverseOrder());
+
+        int key = 0;
+
+        for (int roll = 0; roll < diceRolls.size(); ++roll) {
+            Role currRole = roleValues.get(sortedKeys.get(key));
+            Player currPlayer = currRole.getPlayer();
+            if (currPlayer != null) {
+                currPlayer.updateDollars(diceRolls.get(roll));
+            }
+
+            if (key+1 == sortedKeys.size()) {
+                key = 0;
+            } else {
+                key++;
+            }
+        }
+
+        // Off the card bonuses
+
+        for (Role role : this.offCardRoles) {
+
+            Player currPlayer = role.getPlayer();
+
+            if (currPlayer != null) {
+                currPlayer.updateDollars(role.getDiceNum());
+            }
+        }
+
+        for (Role role : rolesOnCard) {
+            Player currPlayer = role.getPlayer();
+            currPlayer.removeRole();
+            role.finishRole();
+        }
+
+        for (Role role : this.offCardRoles) {
+            Player currPlayer = role.getPlayer();
+            currPlayer.removeRole();
+            role.finishRole();
+        }
+
+        this.sceneAvailable = false;
     }
 
     public boolean sceneAvailable() {
-        return this.sceneAvailable;
+        return this.sceneAvailable; 
     }
-
-    @Override
-    public boolean equals(Object o) {
-        // self check
-        if (this == o) {
-            return true;
-        }
-        // null check
-        if (o == null) {
-            return false;
-        }
-        // type check and cast
-        if (getClass() != o.getClass()) {
-            return false;
-        }
-
-        Location otherLoc = (Location) o;
-
-        if (this.name.equals(otherLoc.getName())) {
-            return true;
-        } else {
-            return false;
-        }
-    }
-
 }

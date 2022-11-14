@@ -4,12 +4,15 @@ class Role {
     private String catchPhrase;
     private boolean roleTaken;
     private Player herePlayer;
+    private boolean onCard;
 
-    public Role(String name, int diceNum, String catchPhrase) {
+    public Role(String name, int diceNum, String catchPhrase, boolean onCard) {
         this.name = name;
         this.diceNum = diceNum;
         this.catchPhrase = catchPhrase;
         this.roleTaken = false;
+        this.onCard = onCard;
+        this.herePlayer = null;
     }
     
     public String getRoleName() {
@@ -24,20 +27,31 @@ class Role {
         return this.catchPhrase;
     }
 
-    public boolean takeRole(Player player) {
+    public void takeRole(Player player) {
         if (!this.roleTaken) {
-            this.herePlayer = player;
-            this.roleTaken = true;
-            return true;
+            if (player.getRank() >= this.diceNum) {
+                this.herePlayer = player;
+                this.herePlayer.changeRole(this);
+                this.roleTaken = true;
+            } else {
+                System.out.println("rank not high enough.");
+            }
         } else {
             System.out.println("Role already taken.");
-            return false;
         }
+    }
+
+    public boolean onCard() {
+        return this.onCard;
     }
 
     public void finishRole() {
         this.roleTaken = false;
         this.herePlayer = null;
+    }
+
+    public Player getPlayer() {
+        return this.herePlayer;
     }
 
 }

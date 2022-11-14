@@ -17,14 +17,12 @@ public class PlayerDice {
         this.rank = rank;
     }
 
-    public int rollPlayerDice(int numOfDice) {
-        LinkedList<Integer> diceRoll = this.dice.rollNDice(numOfDice);
-        int sum = 0;
+    public int rollDie() {
+        LinkedList<Integer> roll = this.dice.rollNDice(1);
+        return roll.get(0);
+    }
 
-        for (int roll : diceRoll) {
-            sum += roll;
-        }
-
-        return sum;
+    public LinkedList<Integer> rollPlayerDice(int numOfDice) {
+        return this.dice.rollNDice(numOfDice);
     }
 }

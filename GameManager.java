@@ -32,6 +32,7 @@ public class GameManager {
     private int startRank;
     private int day;
     private boolean moveUsed;
+    private boolean worked;
     private WinSequence activateWin;
     private Scanner scan;
 
@@ -59,6 +60,9 @@ public class GameManager {
         Random rand = new Random();
         this.activeIndex = rand.nextInt(this.players.size());
         this.activePlayer = players.get(this.activeIndex);
+
+        this.moveUsed = false;
+        this.worked = false;
 
         this.gameLoop();
 
@@ -212,7 +216,7 @@ public class GameManager {
                             String partName = partElement.getAttribute("name");
                             int level = Integer.parseInt(partElement.getAttribute("level"));
                             String currLine = partElement.getElementsByTagName("line").item(0).getTextContent();
-                            roles.add(new Role(partName, level, currLine));
+                            roles.add(new Role(partName, level, currLine, false));
                         }
                     }
 
@@ -366,7 +370,7 @@ public class GameManager {
                             String partName = partElement.getAttribute("name");
                             int level = Integer.parseInt(partElement.getAttribute("level"));
                             String currLine = partElement.getElementsByTagName("line").item(0).getTextContent();
-                            roles.add(new Role(partName, level, currLine));
+                            roles.add(new Role(partName, level, currLine, true));
                         }
                     }
 
@@ -442,7 +446,7 @@ public class GameManager {
         String isConj = activePlayerGender.equals("They") ? "are" : "is";
         
         System.out.print("The active player is " + activePlayerName + ". ");
-        System.out.print(activePlayerGender + " " + haveConj +" $" + activePlayerDollars + ", ");
+        System.out.print(activePlayerGender + " " + haveConj +" $" + activePlayerDollars + ", and ");
         System.out.print(activePlayerCredits + " credits. ");
         if (activePlayer.workingRole()) {
 
@@ -450,7 +454,7 @@ public class GameManager {
             String roleName = activePlayerRole.getRoleName();
             String catchPhrase = activePlayerRole.getCatch();
 
-            System.out.print(activePlayerGender + " " + isConj +" playing " + activePlayerRole + ", ");
+            System.out.print(activePlayerGender + " " + isConj +" playing " + roleName + ", ");
             System.out.println("\"" + catchPhrase + "\"");
 
         } else {
@@ -472,7 +476,7 @@ public class GameManager {
             tokenizer.next();
             String newLocation = tokenizer.nextLine().substring(1);
 
-            if (this.board.moveLegal(this.activePlayer, newLocation)) {
+            if (this.board.moveLegal(this.activePlayer, newLocation) && board.getLocation(newLocation).sceneAvailable()) {
                 movePlayer(this.activePlayer, board.getLocation(newLocation));
                 this.moveUsed = true;
             } else {
@@ -502,23 +506,111 @@ public class GameManager {
         }
     }
 
-    private boolean act() {
-        System.out.println("act");
-        return true;
+    private void work(String cmd) {
+        
+        Location playerLoc = this.activePlayer.getLocation();
+        
+        Scanner tokenizer = new Scanner(cmd);
+        tokenizer.next();
+        String newRoleName = tokenizer.nextLine().substring(1);
+
+        boolean workLegal = !playerLoc.getName().equals("office") && !playerLoc.getName().equals("trailer");
+        workLegal = workLegal && playerLoc.sceneAvailable();
+        
+        if (workLegal) {
+            
+            boolean workingRole = this.activePlayer.workingRole();
+
+            if (!workingRole) {
+                this.activePlayer.getLocation().takeRole(this.activePlayer, newRoleName);
+            } else {
+                System.out.println("already working role.");
+            }
+
+        } else {
+            System.out.println("cannot work role in " + this.activePlayer.getLocation().getName());
+        }
     }
 
-    private boolean rehearse() {
-        System.out.println("rehearse");
-        return true;
+    private void act() {
+        
+        Location currLocation = this.activePlayer.getLocation();
+        String locName = currLocation.getName();
+        boolean workLegal = !locName.equals("trailer") && !locName.equals("office");
+        workLegal = workLegal && this.activePlayer.workingRole();
+
+        if (workLegal && !worked) {
+
+            int currBudget = currLocation.getBudget();
+            Role currRole = this.activePlayer.currRole();
+            int roll = this.activePlayer.rollDie();
+            roll += this.activePlayer.getChips();
+
+            if (currRole.onCard()) {
+                
+                if (roll >= currBudget) {
+                    currLocation.takeCounter(this.activePlayer);
+                    this.activePlayer.updateCredit(2);
+                    System.out.println("success! you got $2 credits");
+                } else {
+                    System.out.println("fail! you get nothing");
+                }
+
+                this.worked = true;
+
+            } else {
+                
+                if (roll >= currBudget) {
+                    currLocation.takeCounter(this.activePlayer);
+                    this.activePlayer.updateDollars(1);
+                    this.activePlayer.updateCredit(1);
+                    System.out.println("success! you got 1$ and 1 credit");
+                } else {
+                    this.activePlayer.updateDollars(1);
+                    System.out.println("fail! you only get $1");
+                }
+
+                this.worked = true;
+
+            }
+        } else if (!workLegal && !worked) {
+            System.out.println("cannot work here");
+        } else if (workLegal && worked) {
+            System.out.println("can only work once per turn.");
+        } else {
+            System.out.println("cannot work here");
+        }
+
     }
 
-    private boolean work(String cmd) {
-        System.out.println("work");
-        return true;
+    private void rehearse() {
+
+        Location currLocation = this.activePlayer.getLocation();
+        String locName = currLocation.getName();
+        boolean workLegal = !locName.equals("trailer") && !locName.equals("office");
+        workLegal = workLegal && this.activePlayer.workingRole();
+        
+        if (workLegal && !worked) {
+            this.activePlayer.incrementPracitce();
+        } else if (!workLegal && !worked) {
+            System.out.println("cannot work here");
+        } else if (workLegal && worked) {
+            System.out.println("can only work once per turn.");
+        } else {
+            System.out.println("can only work once per turn.");
+        }
+        
     }
 
     private void end() {
-        this.finishTurn();
+
+        String locName = this.activePlayer.getLocation().getName();
+
+        if (worked || locName.equals("trailer") || locName.equals("office")) {
+            this.finishTurn();
+        } else {
+            System.out.println("cannot end turn until worked");
+        }
     }
 
     private void gameLoop() {
@@ -550,6 +642,7 @@ public class GameManager {
         this.activeIndex = newActiveIndex;
         this.activePlayer = this.players.get(this.activeIndex);
         this.moveUsed = false;
+        this.worked = false;
     } 
 
     private void movePlayer(Player player, Location location) {

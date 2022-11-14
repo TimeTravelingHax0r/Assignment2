@@ -1,3 +1,5 @@
+import java.util.LinkedList;
+
 public class Player {
     private int dollars;
     private int credits;
@@ -20,7 +22,11 @@ public class Player {
         dice.updateRank(startRank);
     }
 
-    public int rollDice(int numOfDice) {
+    public int rollDie() {
+        return this.dice.rollDie();
+    }
+
+    public LinkedList<Integer> rollDice(int numOfDice) {
         return dice.rollPlayerDice(numOfDice);
     }
 
@@ -86,13 +92,15 @@ public class Player {
         }
     }
 
-    public boolean incrementPracitce() {
+    public int getChips() {
+        return this.practiceChips;
+    }
+
+    public void incrementPracitce() {
         if (this.practiceChips == 5) {
             System.out.println("Maximum chips reached");
-            return false;
         } else {
             this.practiceChips++;
-            return true;
         }
     }
 
