@@ -14,7 +14,7 @@ public class Dice {
         int currRoll;
 
         for (int i = 0; i < n; ++i) {
-            currRoll = rand.nextInt(6)+1;
+            currRoll = rand.nextInt(6) + 1;
             diceRoll.add(currRoll);
         }
 

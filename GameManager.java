@@ -18,8 +18,6 @@ import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
 
-// useful: https://www.youtube.com/watch?v=w3WibDOie1Y
-
 public class GameManager {
     private Board board;
     private LinkedList<Player> players;
@@ -43,6 +41,7 @@ public class GameManager {
 
     public void startGame() {
         System.out.println("Welcome to Deadwood!");
+        // reads in XML data
         LinkedList<Object> boardData = this.readXMLBoard("board.xml");
         LinkedList<SceneCard> cardData = this.readXMLCards("cards.xml");
 
@@ -51,19 +50,25 @@ public class GameManager {
         Upgrades upgrades = (Upgrades) boardData.get(2);
         Location trailer = new Location("trailer");
         Location castingOffice = new Location("office");
+        locations.add(trailer);
+        locations.add(castingOffice);
 
+        // Initialize board containing locations and location data
         this.board = new Board(locations, connections, cardData, upgrades, trailer, castingOffice);
         board.setCards();
 
         this.setupGame();
 
+        // Get random player for initial round
         Random rand = new Random();
         this.activeIndex = rand.nextInt(this.players.size());
         this.activePlayer = players.get(this.activeIndex);
 
+        // Setup game state for initial round
         this.moveUsed = false;
         this.worked = false;
 
+        // begin game loop
         this.gameLoop();
 
         // FOR DEBUGGING
@@ -82,45 +87,56 @@ public class GameManager {
         System.out.println("Please enter the number of players: ");
         this.numPlayers = Integer.parseInt(scan.nextLine());
 
+        // setup game settings for number of players
         if (2 <= this.numPlayers && this.numPlayers <= 8) {
 
             switch (this.numPlayers) {
-                case 2: this.maxDays = 3;
-                        this.startCredits = 0;
-                        this.startRank = 1;
-                        break;
-                case 3: this.maxDays = 3;
-                        this.startCredits = 0;
-                        this.startRank = 1;
-                        break;
-                case 4: this.maxDays = 4;
-                        this.startCredits = 0;
-                        this.startRank = 1;
-                        break;
-                case 5: this.maxDays = 4;
-                        this.startCredits = 2;
-                        this.startRank = 1;
-                        break;
-                case 6: this.maxDays = 4;
-                        this.startCredits = 4;
-                        this.startRank = 1;
-                        break;
-                case 7: this.maxDays = 4;
-                        this.startCredits = 0;
-                        this.startRank = 2;
-                case 8: this.maxDays = 4;
-                        this.startCredits = 0;
-                        this.startRank = 2;
-                default: System.out.println("Unrecognized player amount!");
+                case 2:
+                    this.maxDays = 3;
+                    this.startCredits = 0;
+                    this.startRank = 1;
+                    break;
+                case 3:
+                    this.maxDays = 3;
+                    this.startCredits = 0;
+                    this.startRank = 1;
+                    break;
+                case 4:
+                    this.maxDays = 4;
+                    this.startCredits = 0;
+                    this.startRank = 1;
+                    break;
+                case 5:
+                    this.maxDays = 4;
+                    this.startCredits = 2;
+                    this.startRank = 1;
+                    break;
+                case 6:
+                    this.maxDays = 4;
+                    this.startCredits = 4;
+                    this.startRank = 1;
+                    break;
+                case 7:
+                    this.maxDays = 4;
+                    this.startCredits = 0;
+                    this.startRank = 2;
+                case 8:
+                    this.maxDays = 4;
+                    this.startCredits = 0;
+                    this.startRank = 2;
+                default:
+                    System.out.println("Unrecognized player amount!");
             }
 
+            // ask user to initialize player names and gender (for printing data)
             for (int i = 0; i < this.numPlayers; ++i) {
-                System.out.print("Please enter the name of player " + (i+1) + ": ");
+                System.out.print("Please enter the name of player " + (i + 1) + ": ");
                 String currPlayer = this.scan.next();
                 System.out.println("Please enter the gender of [" + currPlayer + "] [M/F/GN]: ");
                 String genderChoice = this.scan.next();
 
-                while ((!genderChoice.equals("M") && !genderChoice.equals("F")) && !genderChoice.equals("GN")){
+                // ask until user input is valid
+                while ((!genderChoice.equals("M") && !genderChoice.equals("F")) && !genderChoice.equals("GN")) {
                     System.out.println("Invalid selection, please try again.");
                     System.out.println("Please enter the gender of [" + currPlayer + "] [M/F/GN]: ");
                     genderChoice = this.scan.next();
@@ -128,22 +144,27 @@ public class GameManager {
 
                 String playerGender;
                 switch (genderChoice) {
-                    case "M":   playerGender = "He";
-                                break;
-                    case "F":   playerGender = "She";
-                                break;
+                    case "M":
+                        playerGender = "He";
+                        break;
+                    case "F":
+                        playerGender = "She";
+                        break;
                     case "GN":
-                    default:    playerGender = "They";
-                                break;
+                    default:
+                        playerGender = "They";
+                        break;
                 }
 
                 Player tempPlayer = new Player(currPlayer, this.startRank, this.startCredits, playerGender);
                 tempPlayer.movePlayer(board.getTrailer());
 
+                // Add new player to player list
                 this.players.add(tempPlayer);
             }
 
         } else {
+            // exit program if player number is invalid
             this.scan.close();
             System.exit(0);
         }
@@ -156,7 +177,7 @@ public class GameManager {
         HashMap<Integer, Integer> creditCosts = new HashMap<>();
         HashMap<String, LinkedList<String>> connections = new HashMap<>();
         DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
-        
+
         try {
 
             DocumentBuilder builder = factory.newDocumentBuilder();
@@ -165,9 +186,10 @@ public class GameManager {
 
             document.getDocumentElement().normalize();
 
+            // for each set
             NodeList setList = document.getElementsByTagName("set");
             for (int i = 0; i < setList.getLength(); ++i) {
-                
+
                 Node set = setList.item(i);
 
                 if (set.getNodeType() == Node.ELEMENT_NODE) {
@@ -176,6 +198,8 @@ public class GameManager {
 
                     String currName = setElement.getAttribute("name");
 
+                    // get each neighbor of each location and make a hashmap (key (String): current
+                    // location, value(LinkedList<String>): list of adjacent locations)
                     Node neighbors = setElement.getElementsByTagName("neighbors").item(0);
                     Element neighsElement = (Element) neighbors;
                     NodeList neighList = neighsElement.getElementsByTagName("neighbor");
@@ -184,11 +208,12 @@ public class GameManager {
                         Node neighbor = neighList.item(j);
                         if (neighbor.getNodeType() == Node.ELEMENT_NODE) {
                             Element neighElement = (Element) neighbor;
-                            String currNeighName =  neighElement.getAttribute("name");
+                            String currNeighName = neighElement.getAttribute("name");
                             neighborsList.add(currNeighName);
                         }
                     }
 
+                    // get number of takes at each location
                     Node takes = setElement.getElementsByTagName("takes").item(0);
                     Element takesElement = (Element) takes;
                     NodeList takeList = takesElement.getElementsByTagName("take");
@@ -205,6 +230,7 @@ public class GameManager {
                         }
                     }
 
+                    // get all roles in each location
                     Node parts = setElement.getElementsByTagName("parts").item(0);
                     Element partsElement = (Element) parts;
                     NodeList partList = partsElement.getElementsByTagName("part");
@@ -220,6 +246,7 @@ public class GameManager {
                         }
                     }
 
+                    // generate location
                     Location currLocation = new Location(currName, roles, highestTake);
                     locations.add(currLocation);
                     connections.put(currName, neighborsList);
@@ -227,15 +254,15 @@ public class GameManager {
                     // FOR DEBUGGING
 
                     // for (String s : neighborsList) {
-                    //     System.out.println(s);
+                    // System.out.println(s);
                     // }
 
                     // System.out.println(highestTake);
 
                     // for (Role r : roles) {
-                    //     System.out.println("Role name: " + r.getRoleName());
-                    //     System.out.println("Role num: " + r.getDiceNum());
-                    //     System.out.println("Role line: " + r.getCatch());
+                    // System.out.println("Role name: " + r.getRoleName());
+                    // System.out.println("Role num: " + r.getDiceNum());
+                    // System.out.println("Role line: " + r.getCatch());
                     // }
                 }
             }
@@ -249,6 +276,7 @@ public class GameManager {
 
                 Element trailerElement = (Element) trailer;
 
+                // get neighbors of trailer
                 Node neighbors = trailerElement.getElementsByTagName("neighbors").item(0);
                 Element neighsElement = (Element) neighbors;
                 NodeList neighList = neighsElement.getElementsByTagName("neighbor");
@@ -256,7 +284,7 @@ public class GameManager {
                     Node neighbor = neighList.item(j);
                     if (neighbor.getNodeType() == Node.ELEMENT_NODE) {
                         Element neighElement = (Element) neighbor;
-                        String currNeighName =  neighElement.getAttribute("name");
+                        String currNeighName = neighElement.getAttribute("name");
                         trailerNeighbors.add(currNeighName);
                     }
                 }
@@ -266,6 +294,7 @@ public class GameManager {
 
                 Element officeElement = (Element) office;
 
+                // get neighbors of office
                 Node neighbors = officeElement.getElementsByTagName("neighbors").item(0);
                 Element neighsElement = (Element) neighbors;
                 NodeList neighList = neighsElement.getElementsByTagName("neighbor");
@@ -273,11 +302,12 @@ public class GameManager {
                     Node neighbor = neighList.item(j);
                     if (neighbor.getNodeType() == Node.ELEMENT_NODE) {
                         Element neighElement = (Element) neighbor;
-                        String currNeighName =  neighElement.getAttribute("name");
+                        String currNeighName = neighElement.getAttribute("name");
                         officeNeighbors.add(currNeighName);
                     }
                 }
 
+                // get rank upgrade information
                 Node upgrades = officeElement.getElementsByTagName("upgrades").item(0);
                 Element upgradesElement = (Element) upgrades;
                 NodeList upgradeList = upgradesElement.getElementsByTagName("upgrade");
@@ -285,7 +315,7 @@ public class GameManager {
                     Node upgrade = upgradeList.item(j);
                     if (upgrade.getNodeType() == Node.ELEMENT_NODE) {
                         Element upgradeElement = (Element) upgrade;
-                        String currAttrType =  upgradeElement.getAttribute("currency");
+                        String currAttrType = upgradeElement.getAttribute("currency");
                         int level = Integer.parseInt(upgradeElement.getAttribute("level"));
                         int amt = Integer.parseInt(upgradeElement.getAttribute("amt"));
                         if (currAttrType.equals("dollar")) {
@@ -304,11 +334,11 @@ public class GameManager {
 
             // System.out.println("new stuff:");
             // for (String s : trailerNeighbors) {
-            //     System.out.println(s);
+            // System.out.println(s);
             // }
 
             // for (String s : officeNeighbors) {
-            //     System.out.println(s);
+            // System.out.println(s);
             // }
 
         } catch (ParserConfigurationException e) {
@@ -319,6 +349,7 @@ public class GameManager {
             e.printStackTrace();
         }
 
+        // return locations, adjacent locations, and upgrades information in list
         LinkedList<Object> returnList = new LinkedList<>();
         returnList.add(locations);
         returnList.add(connections);
@@ -328,10 +359,10 @@ public class GameManager {
     }
 
     private LinkedList<SceneCard> readXMLCards(String infile) {
-        
+
         LinkedList<SceneCard> cards = new LinkedList<>();
         DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
-        
+
         try {
 
             DocumentBuilder builder = factory.newDocumentBuilder();
@@ -340,15 +371,17 @@ public class GameManager {
 
             document.getDocumentElement().normalize();
 
+            // for each card in XML
             NodeList cardList = document.getElementsByTagName("card");
             for (int i = 0; i < cardList.getLength(); ++i) {
-                
+
                 Node card = cardList.item(i);
 
                 if (card.getNodeType() == Node.ELEMENT_NODE) {
 
                     Element cardElement = (Element) card;
 
+                    // get name, budget, and scene
                     String cardName = cardElement.getAttribute("name");
                     int budget = Integer.parseInt(cardElement.getAttribute("budget"));
 
@@ -361,12 +394,14 @@ public class GameManager {
                         sceneNum = Integer.parseInt(sceneElement.getAttribute("number"));
                     }
 
+                    // for each part
                     NodeList partList = cardElement.getElementsByTagName("part");
                     LinkedList<Role> roles = new LinkedList<>();
                     for (int j = 0; j < partList.getLength(); ++j) {
                         Node part = partList.item(j);
                         if (part.getNodeType() == Node.ELEMENT_NODE) {
                             Element partElement = (Element) part;
+                            // get name, level, and line
                             String partName = partElement.getAttribute("name");
                             int level = Integer.parseInt(partElement.getAttribute("level"));
                             String currLine = partElement.getElementsByTagName("line").item(0).getTextContent();
@@ -374,10 +409,11 @@ public class GameManager {
                         }
                     }
 
+                    // generate new card with details
                     SceneCard currCard = new SceneCard(cardName, budget, sceneNum, sceneDesc, roles);
                     cards.add(currCard);
 
-                    // FOR DEBUGGING 
+                    // FOR DEBUGGING
 
                     // System.out.println("name: " + cardName);
                     // System.out.println("budget: " + budget);
@@ -385,9 +421,9 @@ public class GameManager {
                     // System.out.println("desc: " + sceneDesc);
 
                     // for (Role r : roles) {
-                    //     System.out.println("Role name: " + r.getRoleName());
-                    //     System.out.println("Role num: " + r.getDiceNum());
-                    //     System.out.println("Role line: " + r.getCatch());
+                    // System.out.println("Role name: " + r.getRoleName());
+                    // System.out.println("Role num: " + r.getDiceNum());
+                    // System.out.println("Role line: " + r.getCatch());
                     // }
 
                 }
@@ -410,51 +446,74 @@ public class GameManager {
         String mainCmd = tokenizer.next();
 
         switch (mainCmd) {
-            case "active":          this.activePlayer(cmd);
-                                    break;
+            case "active":
+                this.activePlayer(cmd);
+                break;
 
-            case "move":            this.move(cmd);
-                                    break;
+            case "move":
+                this.move(cmd);
+                break;
 
-            case "where":           this.where(cmd);
-                                    break;
+            case "where":
+                this.where(cmd);
+                break;
 
-            case "act":             this.act();
-                                    break;
+            case "act":
+                this.act();
+                break;
 
-            case "rehearse":        this.rehearse();
-                                    break;
+            case "rehearse":
+                this.rehearse();
+                break;
 
-            case "work":            this.work(cmd);
-                                    return;
+            case "work":
+                this.work(cmd);
+                break;
 
-            case "end":             this.end();
-                                    return;
+            case "upgrade":
+                this.upgrade();
+                break;
 
-            default:    System.out.println("error: unrecognized command.");
+            case "end":
+                this.end();
+                break;
+
+            default:
+                System.out.println("error: unrecognized command.");
         }
     }
 
+    // prints out information about the active player, such as location, dollars, credits, and rank
     private void activePlayer(String cmd) {
-        
+
+        Scanner tokenizer = new Scanner(cmd);
+        tokenizer.next();
+        String cmdPiece = tokenizer.nextLine().substring(1);
+
+        if (!cmdPiece.equals("player?")) {
+            System.out.println("error: incorrect command usage.");
+        }
+
         String activePlayerName = this.activePlayer.getName();
         String activePlayerGender = this.activePlayer.getGender();
+        int activePlayerRank = this.activePlayer.getRank();
         int activePlayerDollars = this.activePlayer.getDollars();
         int activePlayerCredits = this.activePlayer.getCredits();
-    
+
         String haveConj = activePlayerGender.equals("They") ? "have" : "has";
         String isConj = activePlayerGender.equals("They") ? "are" : "is";
-        
+
         System.out.print("The active player is " + activePlayerName + ". ");
-        System.out.print(activePlayerGender + " " + haveConj +" $" + activePlayerDollars + ", and ");
-        System.out.print(activePlayerCredits + " credits. ");
+        System.out.print(activePlayerGender + " " + haveConj + " $" + activePlayerDollars + ", ");
+        System.out.print(activePlayerCredits + " credits, and rank ");
+        System.out.print(activePlayerRank + ". ");
         if (activePlayer.workingRole()) {
 
             Role activePlayerRole = this.activePlayer.currRole();
             String roleName = activePlayerRole.getRoleName();
             String catchPhrase = activePlayerRole.getCatch();
 
-            System.out.print(activePlayerGender + " " + isConj +" playing " + roleName + ", ");
+            System.out.print(activePlayerGender + " " + isConj + " playing " + roleName + ", ");
             System.out.println("\"" + catchPhrase + "\"");
 
         } else {
@@ -466,61 +525,106 @@ public class GameManager {
         }
     }
 
+    // moves active player to another location if conditions allow it
     private void move(String cmd) {
 
         if (this.activePlayer.workingRole()) {
             System.out.println("cannot move while working role.");
-        }
-        else if (!this.moveUsed) {
+        } else if (!this.moveUsed && !this.worked) {
             Scanner tokenizer = new Scanner(cmd);
             tokenizer.next();
             String newLocation = tokenizer.nextLine().substring(1);
 
-            if (this.board.moveLegal(this.activePlayer, newLocation) && board.getLocation(newLocation).sceneAvailable()) {
+            if (this.board.moveLegal(this.activePlayer, newLocation)) {
                 movePlayer(this.activePlayer, board.getLocation(newLocation));
                 this.moveUsed = true;
             } else {
                 System.out.println("move not legal.");
             }
+        } else if (this.worked) {
+            System.out.println("cannot move after working.");
         } else {
             System.out.println("move already used.");
         }
     }
 
+    // where: displays location and card info of active player
+    // where all: displays info about locations of all players
     private void where(String cmd) {
-        Location playerLoc = this.activePlayer.getLocation();
+
+        Scanner tokenizer = new Scanner(cmd);
+        String cmdPiece = null;
+
+        // check if command is (where) or (where all)
+        tokenizer.next();
+        if (tokenizer.hasNextLine()) {
+            cmdPiece = tokenizer.nextLine().substring(1);
+        }
+
+        // if command is just where
+        if (cmdPiece == null) {
+            this.whereHelper(this.activePlayer, false);
+        } else if (cmdPiece.equals("all")) {
+            System.out.println("------------ Player Locations -----------");
+            for (Player player : this.players) {
+                whereHelper(player, true);
+            }
+            System.out.println("-----------------------------------------");
+        }
+
+    }
+
+    // processes information then prints out where command 
+    private void whereHelper(Player player, boolean all) {
+        Location playerLoc = player.getLocation();
 
         String placeName = playerLoc.getName();
 
+        // If scene is not wrapped
         if (playerLoc.sceneAvailable()) {
 
             SceneCard card = playerLoc.getCard();
             String sceneName = card.getName();
             int sceneNum = card.getNum();
-            
-            System.out.println("in " + placeName + " shooting " + sceneName + " scene " + sceneNum );
+
+            // print player name if displaying all players
+            if (all) {
+                System.out.print(player.getName() + " is ");
+            }
+            System.out.println("in " + placeName + " shooting " + sceneName + " scene " + sceneNum);
         } else if (placeName.equals("trailer") || placeName.equals("office")) {
+            // print player name if displaying all players
+            if (all) {
+                System.out.print(player.getName() + " is @ ");
+            }
             System.out.println(placeName);
         } else {
+            if (all) {
+                System.out.print(player.getName() + " is @ ");
+            }
             System.out.println(placeName + " wrapped");
         }
     }
 
+    // allows player to begin a role
     private void work(String cmd) {
-        
+
         Location playerLoc = this.activePlayer.getLocation();
-        
+
+        // get name of role from command
         Scanner tokenizer = new Scanner(cmd);
         tokenizer.next();
         String newRoleName = tokenizer.nextLine().substring(1);
 
         boolean workLegal = !playerLoc.getName().equals("office") && !playerLoc.getName().equals("trailer");
         workLegal = workLegal && playerLoc.sceneAvailable();
-        
+
+        // if not office or trailer and scene is not wrapped
         if (workLegal) {
-            
+
             boolean workingRole = this.activePlayer.workingRole();
 
+            // if not already working a role
             if (!workingRole) {
                 this.activePlayer.getLocation().takeRole(this.activePlayer, newRoleName);
             } else {
@@ -532,8 +636,9 @@ public class GameManager {
         }
     }
 
+    // rolls dice and acts if player is working role
     private void act() {
-        
+
         Location currLocation = this.activePlayer.getLocation();
         String locName = currLocation.getName();
         boolean workLegal = !locName.equals("trailer") && !locName.equals("office");
@@ -547,11 +652,11 @@ public class GameManager {
             roll += this.activePlayer.getChips();
 
             if (currRole.onCard()) {
-                
+
                 if (roll >= currBudget) {
                     System.out.println("success! you got $2 credits");
                     this.wrapped(currLocation.takeCounter(this.activePlayer));
-                    this.activePlayer.updateCredit(2);
+                    this.activePlayer.updateCredits(2);
                 } else {
                     System.out.println("fail! you get nothing");
                 }
@@ -559,12 +664,12 @@ public class GameManager {
                 this.worked = true;
 
             } else {
-                
+
                 if (roll >= currBudget) {
                     System.out.println("success! you got 1$ and 1 credit");
                     this.wrapped(currLocation.takeCounter(this.activePlayer));
                     this.activePlayer.updateDollars(1);
-                    this.activePlayer.updateCredit(1);
+                    this.activePlayer.updateCredits(1);
                 } else {
                     this.activePlayer.updateDollars(1);
                     System.out.println("fail! you only get $1");
@@ -583,13 +688,14 @@ public class GameManager {
 
     }
 
+    // gives player practice token if working role
     private void rehearse() {
 
         Location currLocation = this.activePlayer.getLocation();
         String locName = currLocation.getName();
         boolean workLegal = !locName.equals("trailer") && !locName.equals("office");
         workLegal = workLegal && this.activePlayer.workingRole();
-        
+
         if (workLegal && !worked) {
             if (this.activePlayer.incrementPracitce()) {
                 this.worked = true;
@@ -603,19 +709,110 @@ public class GameManager {
         } else {
             System.out.println("can only work once per turn.");
         }
-        
+
     }
 
+    // displays information on upgrade costs and allows user to choose upgrades
+    private void upgrade() {
+
+        String currLocName = this.activePlayer.getLocation().getName();
+        boolean upgradeAllowed = currLocName.equals("office");
+
+        if (upgradeAllowed) {
+
+            Upgrades upgrades = board.getUpgradeMap();
+            HashMap<Integer, Integer> dollarCosts = upgrades.getDollarCosts();
+            HashMap<Integer, Integer> creditCosts = upgrades.getCreditCosts();
+
+            String rankText = "Rank";
+            String dollarText = "Dollars";
+            String creditText = "Credits";
+            // print out information on upgrades
+            System.out.printf("%8s %8s %8s\n", rankText, dollarText, creditText);
+            for (int i = 0; i < 26; ++i) {
+                System.out.print("-");
+            }
+
+            System.out.println("");
+
+            for (int rank = 2; rank < 7; ++rank) {
+                System.out.printf("%8d %8d %8d\n", rank, dollarCosts.get(rank), creditCosts.get(rank));
+            }
+
+            for (int i = 0; i < 26; ++i) {
+                System.out.print("-");
+            }
+            System.out.println("");
+
+            // ask whether paying with dollars or credits until correct input
+            System.out.print("How would you like to pay? [D/C]: ");
+            String payMethod = this.scan.next();
+            while (!payMethod.equals("D") && !payMethod.equals("C")) {
+                System.out.print("incorrect option, please try again");
+                payMethod = this.scan.next();
+            }
+
+            // ask which rank until correct input
+            System.out.print("Which rank would you like? [2-6]:");
+            int rankChoice = this.scan.nextInt();
+            while (rankChoice < 2 && rankChoice > 6) {
+                System.out.print("incorrect rank, please choose between [2-6]");
+                rankChoice = this.scan.nextInt();
+            }
+
+            int currRank = this.activePlayer.getRank();
+
+            // if rank is lower or equal drop command
+            if (rankChoice <= currRank) {
+                System.out.println("command failed: cannot select rank smaller than or equal to current rank");
+                return;
+            }
+
+            if (payMethod.equals("D")) {
+                int cost = dollarCosts.get(rankChoice);
+                int dollarFunds = this.activePlayer.getDollars();
+
+                if (cost >= dollarFunds) {
+                    this.activePlayer.updateDollars(-cost);
+                    this.activePlayer.updateRank(rankChoice);
+                } else {
+                    System.out.println("not enough dollars! try again later.");
+                }
+
+            } else if (payMethod.equals("C")) {
+                int cost = creditCosts.get(rankChoice);
+                int creditFunds = this.activePlayer.getCredits();
+
+                if (cost >= creditFunds) {
+                    this.activePlayer.updateCredits(-cost);
+                    this.activePlayer.updateRank(rankChoice);
+                    System.out.println("Successfully ranked up: RANK " + rankChoice + "!");
+                } else {
+                    System.out.println("not enough credits! try again later.");
+                }
+
+            } else {
+                System.out.println("error: invalid payment method");
+                return;
+            }
+
+        } else {
+            System.out.println("must be in office to upgrade");
+        }
+    }
+
+    // runs when user ends command
     private void end() {
         this.finishTurn();
     }
 
+    // runs game loop, processes command input, and changes day
     private void gameLoop() {
-        
+
         Scanner input = new Scanner(System.in);
         String cmd;
         this.day = 0;
-        
+
         for (int currDay = 0; currDay < this.maxDays; ++currDay) {
 
             while (true) {
@@ -628,9 +825,16 @@ public class GameManager {
                     break;
                 }
             }
+
+            System.out.println("Day " + (currDay + 1) + " is over! That's a wrap.");
+            board.newDay();
+            board.setCards();
         }
+
+        this.activateWin.activate();
     }
 
+    // reset variables for next player's turn
     private void finishTurn() {
         int newActiveIndex = this.activeIndex + 1;
         if (newActiveIndex == players.size()) {
@@ -641,36 +845,17 @@ public class GameManager {
         this.activePlayer = this.players.get(this.activeIndex);
         this.moveUsed = false;
         this.worked = false;
-    } 
+    }
 
+    // moves player object
     private void movePlayer(Player player, Location location) {
         player.movePlayer(location);
     }
 
-    private boolean work(Player player, String type) {
-        return true;
-    }
-
-    private void rehearse(Player player) {
-
-    }
-
-    private void upgrade(Player player, int rank) {
-
-    }
-
-    private int calcPayerout(Player player, boolean onCard) {
-        return 0;
-    }
-
+    // checks how many scenes are wrapped
     private void wrapped(boolean isWrapped) {
         if (isWrapped) {
             this.scenesUsed++;
         }
     }
-
-    private void win() {
-        
-    }
-
 }

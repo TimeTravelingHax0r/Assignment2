@@ -10,7 +10,8 @@ public class Board {
     private HashMap<String, LinkedList<String>> connections;
     private Upgrades upgrades;
 
-    public Board(LinkedList<Location> locations, HashMap<String, LinkedList<String>> connections, LinkedList<SceneCard> cards, Upgrades upgrades, Location trailer, Location castingOffice) {
+    public Board(LinkedList<Location> locations, HashMap<String, LinkedList<String>> connections,
+            LinkedList<SceneCard> cards, Upgrades upgrades, Location trailer, Location castingOffice) {
         this.locations = locations;
         this.castingOffice = castingOffice;
         this.trailer = trailer;
@@ -20,24 +21,19 @@ public class Board {
     }
 
     public Location getLocation(String locName) {
+        if (locName.equals("office") || locName.equals("Office")) {
+            return this.castingOffice;
+        }
+        if (locName.equals("trailer") || locName.equals("Trailer")) {
+            return this.trailer;
+        }
         for (Location location : this.locations) {
             if (location.getName().equals(locName)) {
                 return location;
-            } 
+            }
         }
 
         return null;
-    }
-
-    public boolean moveLegal(Player player, String newLocation) {
-        LinkedList<String> adjLocations = getAdjLocations(player);
-
-        return adjLocations.contains(newLocation);
-    }
-
-    public Location getCasting() {
-        int[] test = {1,2,3};
-        return new Location("", new LinkedList<Role>(), 1);
     }
 
     public Location getTrailer() {
@@ -48,17 +44,37 @@ public class Board {
         return this.upgrades;
     }
 
-    public void setCards() {
-        Collections.shuffle(this.cards);
-        for (int i = 0; i < locations.size(); ++i) {
-            SceneCard currCard = this.cards.pollFirst();
-            this.locations.get(i).setCard(currCard);
-        }
-    }
-
     private LinkedList<String> getAdjLocations(Player player) {
         Location playerLoc = player.getLocation();
 
         return this.connections.get(playerLoc.getName());
+    }
+
+    public void setCards() {
+        Collections.shuffle(this.cards);
+        for (int i = 0; i < locations.size(); ++i) {
+
+            Location currLoc = this.locations.get(i);
+
+            if (currLoc.getName().equals("office") || currLoc.getName().equals("trailer")) {
+                continue;
+            }
+
+            SceneCard currCard = this.cards.pollFirst();
+            currLoc.setCard(currCard);
+            this.cards.remove(currCard);
+        }
+    }
+
+    public boolean moveLegal(Player player, String newLocation) {
+        LinkedList<String> adjLocations = getAdjLocations(player);
+
+        return adjLocations.contains(newLocation);
+    }
+
+    public void newDay() {
+        for (Location location : this.locations) {
+            location.resetScene();
+        }
     }
 }

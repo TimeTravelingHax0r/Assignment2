@@ -27,14 +27,6 @@ public class Location {
         this.isSpecial = true;
     }
 
-    public void setCard(SceneCard card) {
-        if (!isSpecial) {
-            this.card = card;
-        } else {
-            System.out.println("Cannot put special card on this location.");
-        }
-    }
-
     public String getName() {
         return this.name;
     }
@@ -63,11 +55,20 @@ public class Location {
         }
     }
 
+    public void setCard(SceneCard card) {
+        if (!isSpecial) {
+            this.card = card;
+        } else {
+            System.out.println("Cannot put special card on this location.");
+        }
+    }
+
+    // gets role from this location, sets player onto role
     public void takeRole(Player player, String roleName) {
-        
+
         if (!this.isSpecial) {
             Role playerRole = null;
-        
+
             for (Role role : this.offCardRoles) {
                 if (role.getRoleName().equals(roleName)) {
                     playerRole = role;
@@ -82,6 +83,7 @@ public class Location {
 
             if (playerRole != null) {
                 playerRole.takeRole(player);
+                player.changeRole(playerRole);
             } else {
                 System.out.println("error: no role found.");
             }
@@ -90,11 +92,17 @@ public class Location {
         }
     }
 
+    public boolean sceneAvailable() {
+        return this.sceneAvailable;
+    }
+
+    // resets shot counter for next scene
     public void resetScene() {
         this.shotsLeft = this.totalShots;
         this.sceneAvailable = true;
     }
 
+    // take counter from board and wrap scene if final counter
     public boolean takeCounter(Player activePlayer) {
         if (this.shotsLeft == 1) {
             this.wrapScene(activePlayer);
@@ -105,6 +113,7 @@ public class Location {
         }
     }
 
+    // wraps up scene
     private void wrapScene(Player activePlayer) {
 
         System.out.println("The scene " + this.card.getName() + " is wrapped!");
@@ -115,6 +124,7 @@ public class Location {
         LinkedList<Role> rolesOnCard = this.card.getRoles();
         HashMap<Integer, Role> roleValues = new HashMap<>();
 
+        // get all the roles to give each dice roll to
         for (Role role : rolesOnCard) {
             roleValues.put(role.getDiceNum(), role);
         }
@@ -122,9 +132,10 @@ public class Location {
         LinkedList<Integer> sortedKeys = new LinkedList<>(roleValues.keySet());
         Collections.sort(sortedKeys, Collections.reverseOrder());
 
+        // for each roll
         int key = 0;
-
         for (int roll = 0; roll < diceRolls.size(); ++roll) {
+            // get each player and apply dice award
             Role currRole = roleValues.get(sortedKeys.get(key));
             Player currPlayer = currRole.getPlayer();
             if (currPlayer != null) {
@@ -137,7 +148,7 @@ public class Location {
                 currPlayer.updateDollars(award);
             }
 
-            if (key+1 == sortedKeys.size()) {
+            if (key + 1 == sortedKeys.size()) {
                 key = 0;
             } else {
                 key++;
@@ -160,6 +171,7 @@ public class Location {
             }
         }
 
+        // clear players off roles and finish roles
         for (Role role : rolesOnCard) {
             Player currPlayer = role.getPlayer();
             if (currPlayer != null) {
@@ -168,6 +180,7 @@ public class Location {
             role.finishRole();
         }
 
+        // clear players off roles and finish roles
         for (Role role : this.offCardRoles) {
             Player currPlayer = role.getPlayer();
             if (currPlayer != null) {
@@ -177,9 +190,5 @@ public class Location {
         }
 
         this.sceneAvailable = false;
-    }
-
-    public boolean sceneAvailable() {
-        return this.sceneAvailable; 
     }
 }

@@ -54,6 +54,10 @@ public class Player {
         return this.gender;
     }
 
+    public int getChips() {
+        return this.practiceChips;
+    }
+
     public void changeRole(Role role) {
         this.workingRole = true;
         this.currRole = role;
@@ -72,7 +76,7 @@ public class Player {
         return this.workingRole;
     }
 
-    public boolean updateCredit(int amount) {
+    public boolean updateCredits(int amount) {
         if ((amount) < 0 && ((-amount) > this.credits)) {
             System.out.println("Insufficient funds: credit");
             return false;
@@ -92,8 +96,8 @@ public class Player {
         }
     }
 
-    public int getChips() {
-        return this.practiceChips;
+    public void updateRank(int desiredRank) {
+        this.dice.updateRank(desiredRank);
     }
 
     public boolean incrementPracitce() {
@@ -108,16 +112,6 @@ public class Player {
 
     public void clearPractice() {
         this.practiceChips = 0;
-    }
-
-    public boolean updateRank(int desiredRank) {
-        if (desiredRank > this.dice.getRank()) {
-            this.dice.updateRank(desiredRank);
-            return false;
-        } else {
-            System.out.println("Cannot lower rank");
-            return true;
-        }
     }
 
     public void movePlayer(Location newLocation) {

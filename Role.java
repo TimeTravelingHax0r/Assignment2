@@ -14,7 +14,7 @@ class Role {
         this.onCard = onCard;
         this.herePlayer = null;
     }
-    
+
     public String getRoleName() {
         return this.name;
     }
@@ -25,6 +25,14 @@ class Role {
 
     public String getCatch() {
         return this.catchPhrase;
+    }
+
+    public Player getPlayer() {
+        return this.herePlayer;
+    }
+
+    public boolean onCard() {
+        return this.onCard;
     }
 
     public void takeRole(Player player) {
@@ -41,17 +49,8 @@ class Role {
         }
     }
 
-    public boolean onCard() {
-        return this.onCard;
-    }
-
     public void finishRole() {
         this.roleTaken = false;
         this.herePlayer = null;
     }
-
-    public Player getPlayer() {
-        return this.herePlayer;
-    }
-
 }

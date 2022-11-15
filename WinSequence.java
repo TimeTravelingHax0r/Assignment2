@@ -15,12 +15,14 @@ public class WinSequence {
 		LinkedList<Player> winners = getWinners(playerScores);
 		this.displayWinner(winners, playerScores);
 	}
-	
-	private HashMap<Player, Integer> calcScore(LinkedList<Player> players){
-		
+
+	// calculates score for each player, returns HashMap (key (Player): each player,
+	// value (Integer): the score of each player)
+	private HashMap<Player, Integer> calcScore(LinkedList<Player> players) {
+
 		HashMap<Player, Integer> playerScores = new HashMap<>();
-		
-		for(Player player : players){
+
+		for (Player player : players) {
 
 			int score = player.getDollars();
 			score += player.getCredits();
@@ -32,8 +34,9 @@ public class WinSequence {
 		return playerScores;
 	}
 
-	private LinkedList<Player> getWinners(HashMap<Player, Integer> playerScores){
-		
+	// return list of players with highest scores
+	private LinkedList<Player> getWinners(HashMap<Player, Integer> playerScores) {
+
 		int highestScore = 0;
 		LinkedList<Player> winners = new LinkedList<>();
 
@@ -52,15 +55,17 @@ public class WinSequence {
 		return winners;
 	}
 
+	// takes list of winning players and hashmap of player scores and prints winner info
 	private void displayWinner(LinkedList<Player> winners, HashMap<Player, Integer> playerScores) {
 		if (winners.size() == 1) {
-			System.out.println("The winner is " + winners.get(0).getName() + "! With a score of " + playerScores.get(winners.get(0)) + "!");
+			System.out.println("The winner is " + winners.get(0).getName() + "! With a score of "
+					+ playerScores.get(winners.get(0)) + "!");
 		} else {
 			System.out.print("The winners are ");
 
 			for (int i = 0; i < winners.size(); ++i) {
 
-				if (i != (winners.size()-1)) {
+				if (i != (winners.size() - 1)) {
 					System.out.print(winners.get(i).getName());
 					System.out.print(", ");
 				} else {
@@ -76,4 +81,3 @@ public class WinSequence {
 		}
 	}
 }
-
