@@ -1,0 +1,24 @@
+Authors: Maxwell Schultz and Cole Yamamura
+Date: 11/14/2022
+Title: Deadwood Project Writeup
+
+    Our code makes good use of cohesion through the many methods that each class contains.
+Methods are built to be manageable and flexible through a technique of having return values 
+piped from one command to another. Methods are also often called from local objects which 
+keep unnecessary variables and values mostly hidden until needed. The best example of this is 
+the processCmd() method in GameManager.java which calls other local methods to handle each 
+command. The actual command that is used is typed in and passed to the various methods for 
+processing. This activates behavior through other local methods and methods from connected 
+objects. 
+    The coupling of the Deadwood code attempts to minimize coupling by having the central
+GameManager class manage core functions while the Board class manages Locations, related
+data, and behavior. The Location class uses SceneCard, while both Location and SceneCard
+uses Role. This tiering keeps classes feeding information up and down through the layers so
+that the direction of data is orderly and predictable. This tiering implementation is repeated
+with the implementation of Player <- PlayerDice <- Dice. 
+    While we are satisfied with this implementation, the design principles aren't perfectly
+implemented. To allow the game to function efficiently and correctly, some design principles 
+had to be sacrificed. The biggest example of this are pockets of the code where coupling is
+relatively high, although we'd argue for the size of the project these issues are relatively 
+minimal. Overall our codebase used good naming conventions, efficient and functional OOD,
+and application of the principles cohesion and coupling. 
