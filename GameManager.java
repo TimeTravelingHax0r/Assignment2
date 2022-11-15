@@ -748,15 +748,15 @@ public class GameManager {
             System.out.print("How would you like to pay? [D/C]: ");
             String payMethod = this.scan.next();
             while (!payMethod.equals("D") && !payMethod.equals("C")) {
-                System.out.print("incorrect option, please try again");
+                System.out.print("incorrect option, please try again: ");
                 payMethod = this.scan.next();
             }
 
             // ask which rank until correct input
-            System.out.print("Which rank would you like? [2-6]:");
+            System.out.print("Which rank would you like? [2-6]: ");
             int rankChoice = this.scan.nextInt();
-            while (rankChoice < 2 && rankChoice > 6) {
-                System.out.print("incorrect rank, please choose between [2-6]");
+            while (rankChoice < 2 || rankChoice > 6) {
+                System.out.print("incorrect rank, please choose between [2-6]: ");
                 rankChoice = this.scan.nextInt();
             }
 
@@ -772,7 +772,7 @@ public class GameManager {
                 int cost = dollarCosts.get(rankChoice);
                 int dollarFunds = this.activePlayer.getDollars();
 
-                if (cost >= dollarFunds) {
+                if (cost <= dollarFunds) {
                     this.activePlayer.updateDollars(-cost);
                     this.activePlayer.updateRank(rankChoice);
                 } else {
@@ -783,7 +783,7 @@ public class GameManager {
                 int cost = creditCosts.get(rankChoice);
                 int creditFunds = this.activePlayer.getCredits();
 
-                if (cost >= creditFunds) {
+                if (cost <= creditFunds) {
                     this.activePlayer.updateCredits(-cost);
                     this.activePlayer.updateRank(rankChoice);
                     System.out.println("Successfully ranked up: RANK " + rankChoice + "!");

@@ -82,8 +82,13 @@ public class Location {
             }
 
             if (playerRole != null) {
-                playerRole.takeRole(player);
-                player.changeRole(playerRole);
+                boolean rankTooHigh = player.getRank() < playerRole.getDiceNum();
+                if (!rankTooHigh) {
+                    playerRole.takeRole(player);
+                    player.changeRole(playerRole);
+                } else {
+                    System.out.println("rank not high enough.");
+                }
             } else {
                 System.out.println("error: no role found.");
             }
