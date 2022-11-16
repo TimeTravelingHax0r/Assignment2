@@ -22,3 +22,11 @@ had to be sacrificed. The biggest example of this are pockets of the code where 
 relatively high, although we'd argue for the size of the project these issues are relatively 
 minimal. Overall our codebase used good naming conventions, efficient and functional OOD,
 and application of the principles cohesion and coupling. 
+
+We chose to use this design (illustrated in our Class Diagram) as it allows any class to pull 
+information from methods without overstepping its boundaries, learning things it shouldn't be
+considering. The connections between the files mainly consist of creation, either by the
+GameManager class or by the Player classes respectively, or of communication, such as Player
+learning the role of a Player through currRole. Overall, some adjustments could be made to make
+coupling loose and cohesion flexible, as described above, but these would come at the expense
+of capability and capacity.
