@@ -100,7 +100,7 @@ public class Player {
         this.dice.updateRank(desiredRank);
     }
 
-    public boolean incrementPracitce() {
+    public boolean incrementPractice() {
         if (this.practiceChips == 5) {
             System.out.println("Maximum chips reached");
             return false;
