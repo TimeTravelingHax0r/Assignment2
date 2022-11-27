@@ -26,14 +26,14 @@ public class Board {
         return null;
     }
 
-    public Upgrades getUpgradeMap() {
-        return this.upgrades;
-    }
-
-    private LinkedList<String> getAdjLocations(Player player) {
+    public LinkedList<String> getAdjLocations(Player player) {
         Location playerLoc = player.getLocation();
 
         return this.connections.get(playerLoc.getName());
+    }
+
+    public Upgrades getUpgradeMap() {
+        return this.upgrades;
     }
 
     public void setCards() {
