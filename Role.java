@@ -5,14 +5,19 @@ class Role {
     private boolean roleTaken;
     private Player herePlayer;
     private boolean onCard;
+    private int x, y, h, w;
 
-    public Role(String name, int diceNum, String catchPhrase, boolean onCard) {
+    public Role(String name, int diceNum, String catchPhrase, boolean onCard, int x, int y, int h, int w) {
         this.name = name;
         this.diceNum = diceNum;
         this.catchPhrase = catchPhrase;
         this.roleTaken = false;
         this.onCard = onCard;
         this.herePlayer = null;
+        this.x = x;
+        this.y = y;
+        this.h = h;
+        this.w = w;
     }
 
     public String getRoleName() {
@@ -33,6 +38,22 @@ class Role {
 
     public boolean onCard() {
         return this.onCard;
+    }
+
+    public int getX() {
+        return this.x;
+    }
+
+    public int getY() {
+        return this.y;
+    }
+
+    public int getH() {
+        return this.h;
+    }
+
+    public int getW() {
+        return this.w;
     }
 
     public void takeRole(Player player) {

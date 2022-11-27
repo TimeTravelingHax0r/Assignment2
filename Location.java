@@ -1,8 +1,6 @@
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedList;
-import java.util.List;
 
 public class Location {
     private String name;
@@ -12,19 +10,28 @@ public class Location {
     private int totalShots;
     private int shotsLeft;
     private boolean isSpecial; // used for trailer, casting office
+    private int x, y, h, w;
 
-    public Location(String name, LinkedList<Role> offCardRoles, int shots) {
+    public Location(String name, LinkedList<Role> offCardRoles, int shots, int x, int y, int h, int w) {
         this.name = name;
         this.offCardRoles = offCardRoles;
         this.sceneAvailable = true;
         this.totalShots = shots;
         this.shotsLeft = this.totalShots;
         this.isSpecial = false;
+        this.x = x;
+        this.y = y;
+        this.h = h;
+        this.w = w;
     }
 
-    public Location(String name) {
+    public Location(String name, int x, int y, int h, int w) {
         this.name = name;
         this.isSpecial = true;
+        this.x = x;
+        this.y = y;
+        this.h = h;
+        this.w = w;
     }
 
     public String getName() {
@@ -53,6 +60,22 @@ public class Location {
         } else {
             return null;
         }
+    }
+
+    public int getX() {
+        return this.x;
+    }
+
+    public int getY() {
+        return this.y;
+    }
+
+    public int getH() {
+        return this.h;
+    }
+
+    public int getW() {
+        return this.w;
     }
 
     public void setCard(SceneCard card) {
