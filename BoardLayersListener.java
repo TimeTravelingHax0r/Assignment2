@@ -19,6 +19,9 @@ import javax.swing.JOptionPane;
 public class BoardLayersListener extends JFrame {
 
    boardMouseListener bml;
+   private GameController gc;
+
+   private static String[] playerColors = {"blue", "cyan", "green", "orange", "pink", "red", "violet", "white"};
 
    // JLabels
    JLabel boardlabel;
@@ -60,7 +63,7 @@ public class BoardLayersListener extends JFrame {
    
    // Constructor
    
-   public BoardLayersListener() {
+   public BoardLayersListener(GameController gc) {
          
    // Set the title of the JFrame
    super("Deadwood");
@@ -73,8 +76,9 @@ public class BoardLayersListener extends JFrame {
    this.locButtons = new LinkedList<>();
    this.roleButtons = new LinkedList<>();
    this.numButtons = new LinkedList<>();
-   
-   this.bml = new boardMouseListener();
+
+   this.gc = gc;
+   this.bml = new boardMouseListener(this, this.playerColors, gc);
 
    // Create the deadwood board
    boardlabel = new JLabel();
@@ -87,7 +91,7 @@ public class BoardLayersListener extends JFrame {
    bPane.add(boardlabel, 0);
    
    // Set the size of the GUI
-   setSize(icon.getIconWidth()+200,icon.getIconHeight());
+   setSize(icon.getIconWidth()+300,icon.getIconHeight());
    
    // Add a scene card to this room
    cardlabel = new JLabel();
@@ -111,23 +115,23 @@ public class BoardLayersListener extends JFrame {
    
    // Create the Menu for action buttons
    mLabel = new JLabel("MENU");
-   mLabel.setBounds(icon.getIconWidth()+40,0,100,20);
+   mLabel.setBounds(icon.getIconWidth()+40,0,180,20);
    bPane.add(mLabel, 2);
 
    // Create Action buttons
    bAct = new JButton("ACT");
    bAct.setBackground(Color.white);
-   bAct.setBounds(icon.getIconWidth()+10, 30,100, 20);
+   bAct.setBounds(icon.getIconWidth()+10, 30,140, 20);
    bAct.addMouseListener(this.bml);
    
    bRehearse = new JButton("REHEARSE");
    bRehearse.setBackground(Color.white);
-   bRehearse.setBounds(icon.getIconWidth()+10,60,100, 20);
+   bRehearse.setBounds(icon.getIconWidth()+10,60,140, 20);
    bRehearse.addMouseListener(this.bml);
    
    bMove = new JButton("MOVE");
    bMove.setBackground(Color.white);
-   bMove.setBounds(icon.getIconWidth()+10,90,100, 20);
+   bMove.setBounds(icon.getIconWidth()+10,90,140, 20);
    bMove.addMouseListener(this.bml);
 
    // Place the action buttons in the top layer
@@ -138,13 +142,40 @@ public class BoardLayersListener extends JFrame {
    this.bPane.add(bMove, 2);
    this.buttons.add(bMove);
 
-   this.generateOffRoleOpts();
    this.generatePlayerNumOpts();
    this.generatePlayerNamesOpts();
+   this.generateOnRoleOpts();
+   this.generateOffRoleOpts();
+
+   this.bml.setLabel(this.mLabel);
+   this.bml.setTextField(this.textField);
+}
+
+public String getCurrCmd() {
+   return this.bml.getText();
+}
+
+public JLabel getTextBox() {
+   return this.mLabel;
+}
+
+public LinkedList<Player> getPlayers() {
+   return this.bml.getPlayers();
+}
+
+public void setNumRankCredits(int numPlayers, int rank, int credits) {
+   this.bml.updatePlayerNum(numPlayers);
+   this.bml.updateRank(rank);
+   this.bml.updateCredit(credits);
+}
+
+public void updateTextColor(int playerNum) {
+   this.textField.setText(this.playerColors[playerNum-1]);
 }
 
 public void toggleHowManyOpts() {
    this.clearButtons();
+   this.bml.clearButtons();
 
    this.mLabel.setText("How many players?");
 
@@ -157,6 +188,10 @@ public void toggleHowManyOpts() {
 
 public void togglePlayerNameOpts() {
    this.clearButtons();
+   this.bml.clearButtons();
+
+   this.textField.setText(this.playerColors[0]);
+   this.mLabel.setText("Player 1, please enter you name, and confirm with gender");
 
    this.textField.setVisible(true);
    this.maleButton.setVisible(true);
@@ -164,8 +199,17 @@ public void togglePlayerNameOpts() {
    this.gnButton.setVisible(true);
 }
 
+public void initialTurnOpts() {
+   this.clearButtons();
+   this.bml.clearButtons();
+
+   Player activePlayer = gc.startGame(this.bml.getPlayers());
+   this.toggleTurnOpts(activePlayer);
+}
+
 public void toggleTurnOpts(Player player) {
    this.clearButtons();
+   gc.startGame(this.bml.getPlayers());
 
    String playerName = player.getName();
    this.mLabel.setText(playerName + ", select an action");
@@ -177,6 +221,7 @@ public void toggleTurnOpts(Player player) {
 
 public void toggleMoveOpts(Player player, Board board) {
    this.clearButtons();
+   this.bml.clearButtons();
 
    this.mLabel.setText("Choose a place to move");
 
@@ -187,7 +232,7 @@ public void toggleMoveOpts(Player player, Board board) {
    for (String locName : locations) {
       JButton locButt = new JButton(locName);
       locButt.setBackground(Color.white);
-      locButt.setBounds(this.iconWidth+10, buttonYLoc,100, 20);
+      locButt.setBounds(this.iconWidth+10, buttonYLoc,140, 20);
       locButt.addMouseListener(this.bml);
       this.locButtons.add(locButt);
       this.buttons.add(locButt);
@@ -198,12 +243,13 @@ public void toggleMoveOpts(Player player, Board board) {
    this.bml.updateLocButtons(this.locButtons);
 
    for (JButton button : this.locButtons) {
-      this.bPane.add(button, 5);
+      this.bPane.add(button, 3);
    }
 }
 
 public void toggleTakeRoleOpts(Player player, Board board) {
    this.clearButtons();
+   this.bml.clearButtons();
 
    this.mLabel.setText("Choose a role to act");
 
@@ -218,7 +264,7 @@ public void toggleTakeRoleOpts(Player player, Board board) {
       if (role.getDiceNum() <= rank) {
          JButton roleButt = new JButton(role.getRoleName());
          roleButt.setBackground(Color.white);
-         roleButt.setBounds(this.iconWidth+10, buttonYLoc,100, 20);
+         roleButt.setBounds(this.iconWidth+10, buttonYLoc,140, 20);
          roleButt.addMouseListener(this.bml);
          this.roleButtons.add(roleButt);
          this.buttons.add(roleButt);
@@ -230,12 +276,13 @@ public void toggleTakeRoleOpts(Player player, Board board) {
    this.bml.updateRoleButtons(this.roleButtons);
 
    for (JButton button : this.roleButtons) {
-      this.bPane.add(button, 6);
+      this.bPane.add(button, 4);
    }
 }
 
 public void toggleWorkOnRoleOpts(Player player) {
    this.clearButtons();
+   this.bml.clearButtons();
 
    this.mLabel.setText("act or rehearse?");
 
@@ -245,8 +292,9 @@ public void toggleWorkOnRoleOpts(Player player) {
 
 public void toggleWorkOffRoleOpts() {
    this.clearButtons();
+   this.bml.clearButtons();
 
-   this.mLabel.setText("act or rehearse?");
+   this.mLabel.setText("Do you want to take a role?");
 
    this.yesButton.setVisible(true);
    this.noButton.setVisible(true);
@@ -254,6 +302,7 @@ public void toggleWorkOffRoleOpts() {
 
 public void toggleUpgrade(Player player, Upgrades upgrades) {
    this.clearButtons();
+   this.bml.clearButtons();
 }
 
 private void clearButtons() {
@@ -269,27 +318,24 @@ private void clearButtons() {
       this.bPane.remove(button);
    }
 
-   for (JButton button : this.numButtons) {
-      this.bPane.remove(button);
-   }
-
    this.locButtons.clear();
    this.roleButtons.clear();
-   this.numButtons.clear();
+   this.textField.setVisible(false);
 }
 
 private void generatePlayerNumOpts() {
 
    int buttonYLoc = 30;
 
-   for (int i = 0; i < 8; ++i) {
+   for (int i = 2; i < 9; ++i) {
       JButton numButton = new JButton(Integer.toString(i));
       numButton.setBackground(Color.white);
-      numButton.setBounds(this.iconWidth+10, buttonYLoc,100, 20);
+      numButton.setBounds(this.iconWidth+10, buttonYLoc,140, 20);
+      this.buttons.add(numButton);
       numButton.addMouseListener(this.bml);
       this.numButtons.add(numButton);
-      this.buttons.add(numButton);
-      this.bPane.add(numButton, 3);
+      this.bPane.add(numButton, 5);
+      numButton.setVisible(false);
 
       buttonYLoc += 30;
    }
@@ -297,41 +343,58 @@ private void generatePlayerNumOpts() {
 
 private void generatePlayerNamesOpts() {
 
-   this.textField = new JTextField(15);
-   this.textField.setBackground(Color.white);
-   this.textField.setLocation(this.iconWidth+10, 30);
-   this.bPane.add(this.textField);
+   this.textField = new JTextField(20);
+   this.textField.setBounds(this.iconWidth+10,30,140,20);
+   this.bPane.add(this.textField, 6);
    this.textField.setVisible(false);
 
    this.maleButton = new JButton("MALE");
    this.maleButton.setBackground(Color.white);
-   this.maleButton.setBounds(this.iconWidth+10, 60,100, 20);
+   this.maleButton.setBounds(this.iconWidth+10, 60,140, 20);
    this.maleButton.addMouseListener(this.bml);
    this.buttons.add(this.maleButton);
-   this.bPane.add(this.maleButton, 4);
+   this.bPane.add(this.maleButton, 6);
    this.maleButton.setVisible(false);
 
    this.femaleButton = new JButton("FEMALE");
    this.femaleButton.setBackground(Color.white);
-   this.femaleButton.setBounds(this.iconWidth+10, 60,100, 20);
+   this.femaleButton.setBounds(this.iconWidth+10, 90,140, 20);
    this.femaleButton.addMouseListener(this.bml);
    this.buttons.add(this.femaleButton);
-   this.bPane.add(this.femaleButton, 4);
+   this.bPane.add(this.femaleButton, 6);
    this.femaleButton.setVisible(false);
 
    this.gnButton = new JButton("GENDER NEUTRAL");
    this.gnButton.setBackground(Color.white);
-   this.gnButton.setBounds(this.iconWidth+10, 60,100, 20);
+   this.gnButton.setBounds(this.iconWidth+10, 120,140, 20);
    this.gnButton.addMouseListener(this.bml);
    this.buttons.add(this.gnButton);
-   this.bPane.add(this.gnButton, 4);
+   this.bPane.add(this.gnButton, 6);
    this.gnButton.setVisible(false);
+}
+
+private void generateOnRoleOpts() {
+   this.actButton = new JButton("ACT");
+   this.actButton.setBackground(Color.white);
+   this.actButton.setBounds(this.iconWidth+10, 30, 140, 20);
+   this.actButton.addMouseListener(this.bml);
+   this.buttons.add(this.actButton);
+   this.bPane.add(this.actButton);
+   this.actButton.setVisible(false);
+
+   this.rehearseButton = new JButton("REHEARSE");
+   this.rehearseButton.setBackground(Color.white);
+   this.rehearseButton.setBounds(this.iconWidth+10, 60, 140, 20);
+   this.rehearseButton.addMouseListener(this.bml);
+   this.buttons.add(this.rehearseButton);
+   this.bPane.add(this.rehearseButton);
+   this.rehearseButton.setVisible(false);
 }
 
 private void generateOffRoleOpts() {
    this.yesButton = new JButton("YES");
    this.yesButton.setBackground(Color.white);
-   this.yesButton.setBounds(this.iconWidth+10, 30,100, 20);
+   this.yesButton.setBounds(this.iconWidth+10, 30,140, 20);
    this.yesButton.addMouseListener(this.bml);
    this.buttons.add(this.yesButton);
    this.bPane.add(this.yesButton, 4);
@@ -339,30 +402,81 @@ private void generateOffRoleOpts() {
 
    this.noButton = new JButton("NO");
    this.noButton.setBackground(Color.white);
-   this.noButton.setBounds(this.iconWidth+10,60,100, 20);
+   this.noButton.setBounds(this.iconWidth+10,60,140, 20);
    this.noButton.addMouseListener(this.bml);
    this.buttons.add(this.noButton);
-   this.bPane.add(this.noButton, 4);
+   this.bPane.add(this.noButton, 7);
    this.noButton.setVisible(false);
 }
    
    // This class implements Mouse Events
    class boardMouseListener implements MouseListener{
 
+      private GameController gc;
+
+      private BoardLayersListener bll;
+      private JLabel label;
+      private JTextField textField;
+
+      String[] playerColors;
+
       private LinkedList<JButton> locButtons;
       private LinkedList<JButton> roleButtons;
       private LinkedList<JButton> numButtons;
+      private LinkedList<Player> players;
       private String selectedText;
+      private int numPlayers;
+      private int currPlayer;
+      private int startRank;
+      private int startCredits;
 
-      public boardMouseListener() {
+      public boardMouseListener(BoardLayersListener bll, String[] playerColors, GameController gc) {
+
+         this.bll = bll;
+         this.playerColors = playerColors;
+         this.gc = gc;
+
          this.locButtons = new LinkedList<>();
          this.roleButtons = new LinkedList<>();
          this.numButtons = new LinkedList<>();
+         this.players = new LinkedList<>();
          this.selectedText = null;
+         this.numPlayers = 0;
+         this.currPlayer = 1;
+         this.startRank = 0;
+         this.startCredits = 0;
       }
 
       public String getText() {
          return this.selectedText;
+      }
+
+      public LinkedList<Player> getPlayers() {
+         return this.players;
+      }
+
+      public void setTextField(JTextField textField) {
+         this.textField = textField;
+      }
+
+      public void setLabel(JLabel label) {
+         this.label = label;
+      }
+
+      public void addGameController(GameController gc) {
+         this.gc = gc;
+      }
+
+      public void updatePlayerNum(int numPlayers) {
+         this.numPlayers = numPlayers;
+      }
+
+      public void updateRank(int rank) {
+         this.startRank = rank;
+      }
+
+      public void updateCredit(int credits) {
+         this.startCredits = credits;
       }
 
       public void updateLocButtons(LinkedList<JButton> locButtons) {
@@ -386,24 +500,69 @@ private void generateOffRoleOpts() {
       // Code for the different button clicks
       public void mouseClicked(MouseEvent e) {
          
-         if (e.getSource()== bAct){
+         if (e.getSource() == bAct){
             playerlabel.setVisible(true);
             System.out.println("Acting is Selected\n");
          }
-         else if (e.getSource()== bRehearse){
+         else if (e.getSource() == bRehearse){
             System.out.println("Rehearse is Selected\n");
-         }
-         else if (e.getSource()== bMove){
+         } else if (e.getSource() == bMove){
             System.out.println("Move is Selected\n");
+         } else if (e.getSource() == yesButton) {
+            System.out.println("Yes is Selected\n");
+         } else if (e.getSource() == noButton) {
+            System.out.println("No is Selected\n");
+         } else if (e.getSource() == actButton) {
+            System.out.println("Act sub button is Selected\n");
+         } else if (e.getSource() == rehearseButton) {
+            System.out.println("Rehearse sub button is Selected\n"); 
+         } else if (e.getSource() == maleButton) {
+            System.out.println("Male is Selected\n");
+            System.out.println(this.currPlayer + " " + this.numPlayers);
+            if (this.currPlayer < this.numPlayers) {
+               this.players.add(new Player(this.textField.getText(), this.startRank, this.startCredits, "He"));
+               this.currPlayer++;
+               this.bll.updateTextColor(this.currPlayer);
+               this.label.setText("Player " + this.currPlayer + " enter name and confirm with gender");
+            } else {
+               System.out.println("why am I here");
+               bll.initialTurnOpts();
+            }
+         } else if (e.getSource() == femaleButton) {
+            System.out.println("Female is Selected\n");
+            System.out.println(this.currPlayer + " " + this.numPlayers);
+            if (this.currPlayer < this.numPlayers) {
+               this.players.add(new Player(this.textField.getText(), this.startRank, this.startCredits, "She"));
+               this.currPlayer++;
+               this.bll.updateTextColor(this.currPlayer);
+               this.label.setText("Player " + this.currPlayer + " enter name and confirm with gender");
+            } else {
+               bll.initialTurnOpts();
+            }
+         } else if (e.getSource() == gnButton) {
+            System.out.println("Gender Neutal is Selected\n");
+            System.out.println(this.currPlayer + " " + this.numPlayers);
+            if (this.currPlayer < this.numPlayers) {
+               this.players.add(new Player(this.textField.getText(), this.startRank, this.startCredits, "They"));
+               this.currPlayer++;
+               this.bll.updateTextColor(this.currPlayer);
+               this.label.setText("Player " + this.currPlayer + " enter name and confirm with gender");
+            } else {
+               bll.initialTurnOpts();
+            }
          } else if (this.numButtons.contains(e.getSource())) {
             JButton currButton = (JButton) e.getSource();
             this.selectedText = currButton.getText();
+            this.gc.setPlayerNum(Integer.parseInt(this.selectedText));
+            System.out.println(this.selectedText);
          } else if (this.locButtons.contains(e.getSource())) {
             JButton currButton = (JButton) e.getSource();
             this.selectedText = currButton.getText();
+            System.out.println(this.selectedText);
          } else if (this.roleButtons.contains(e.getSource())) {
             JButton currButton = (JButton) e.getSource();
             this.selectedText = currButton.getText();
+            System.out.println(this.selectedText);
          } else {
             System.out.println("error: button not found");
          }
@@ -415,6 +574,24 @@ private void generateOffRoleOpts() {
       public void mouseEntered(MouseEvent e) {
       }
       public void mouseExited(MouseEvent e) {
+      }
+
+      private Player makePlayer(String currPlayer, int startRank, int startCredits, String genderChoice) {
+         String playerGender;   
+         switch (genderChoice) {
+               case "M":
+                  playerGender = "He";
+                  break;
+               case "F":
+                  playerGender = "She";
+                  break;
+               case "GN":
+               default:
+                  playerGender = "They";
+                  break;
+            }
+
+            return new Player(currPlayer, startRank, startCredits, playerGender);
       }
    }
 }

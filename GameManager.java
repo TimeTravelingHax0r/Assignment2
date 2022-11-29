@@ -68,19 +68,8 @@ public class GameManager {
         this.board = new Board(locations, connections, cardData, upgrades);
         board.setCards();
 
-        this.setupGame();
+        this.getPlayerNum();
 
-        // Get random player for initial round
-        Random rand = new Random();
-        this.activeIndex = rand.nextInt(this.players.size());
-        this.activePlayer = players.get(this.activeIndex);
-
-        // Setup game state for initial round
-        this.moveUsed = false;
-        this.worked = false;
-
-        // begin game loop
-        this.gameController.gameLoop(this.board, this.maxDays);
 
         // FOR DEBUGGING
 
@@ -94,11 +83,17 @@ public class GameManager {
 
     }
 
-    private void setupGame() {
+    public void setPlayerNum(int numPlayers) {
+        this.numPlayers = numPlayers;
+        this.setupGame();
+    }
 
+    private void getPlayerNum() {
         this.gameController = new GameController(this, new GameView());
         this.gameController.initWindow();
-        this.numPlayers = this.gameController.initPlayerNum();
+    }
+
+    private void setupGame() {
 
         // setup game settings for number of players
         if (2 <= this.numPlayers && this.numPlayers <= 8) {
@@ -141,15 +136,10 @@ public class GameManager {
                     System.out.println("Unrecognized player amount!");
             }
 
-            this.players = this.gameController.initPlayers(this.numPlayers, this.startRank, this.startCredits);
-            
-            for (Player player : this.players) {
-                player.movePlayer(board.getLocation("trailer"));
-            }
+            this.gameController.initPlayers(this.numPlayers, this.startRank, this.startCredits);
 
         } else {
             // exit program if player number is invalid
-            this.scan.close();
             System.exit(0);
         }
     }
@@ -473,6 +463,32 @@ public class GameManager {
         }
 
         return cards;
+    }
+
+    public Board getBoard() {
+        return this.board;
+    }
+
+    public Player getActivePlayer() {
+        return this.activePlayer;
+    }
+
+    public void setupPlayers(LinkedList<Player> players) {
+        this.players = players;
+
+        // move players to start location in trailer
+        for (Player player : this.players) {
+            player.movePlayer(this.board.getLocation("trailer"));
+        }
+
+        // Get random player for initial round
+        Random rand = new Random();
+        this.activeIndex = rand.nextInt(this.players.size());
+        this.activePlayer = players.get(this.activeIndex);
+
+        // Setup game state for initial round
+        this.moveUsed = false;
+        this.worked = false;
     }
 
     public void processCmd(String cmd) {
