@@ -11,8 +11,12 @@ public class GameView {
 
     }
 
+    public String getCmd() {
+        return bll.getCurrCmd();
+    }
+
     public void initWindow(Board board, GameController gc) {
-        this.bll = new BoardLayersListener(gc);
+        this.bll = new BoardLayersListener(gc, board);
         this.bll.setVisible(true);
 
         this.bll.toggleHowManyOpts();

@@ -16,6 +16,14 @@ public class GameController {
         view.initWindow(this.model.getBoard(), this);
     }
 
+    public Player getActivePlayer() {
+        return model.getActivePlayer();
+    }
+
+    public boolean moveUsed() {
+        return model.moveUsed();
+    }
+
     public void setPlayerNum(int numPlayers) {
         this.model.setPlayerNum(numPlayers);
     }
@@ -37,10 +45,13 @@ public class GameController {
 
         for (int currDay = 0; currDay < maxDays; ++currDay) {
 
+            String lastCmd = "";
             while (true) {
-                System.out.print("> ");
-                cmd = input.nextLine();
-                model.processCmd(cmd);
+                cmd = view.getCmd();
+                if (cmd.equals(lastCmd)) {
+                    model.processCmd(cmd);
+                    lastCmd = cmd;
+                }
 
                 if (this.scenesUsed == 9) {
                     this.scenesUsed = 0;

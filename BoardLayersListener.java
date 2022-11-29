@@ -20,6 +20,7 @@ public class BoardLayersListener extends JFrame {
 
    boardMouseListener bml;
    private GameController gc;
+   private Board board;
 
    private static String[] playerColors = {"blue", "cyan", "green", "orange", "pink", "red", "violet", "white"};
 
@@ -63,7 +64,7 @@ public class BoardLayersListener extends JFrame {
    
    // Constructor
    
-   public BoardLayersListener(GameController gc) {
+   public BoardLayersListener(GameController gc, Board board) {
          
    // Set the title of the JFrame
    super("Deadwood");
@@ -78,6 +79,7 @@ public class BoardLayersListener extends JFrame {
    this.numButtons = new LinkedList<>();
 
    this.gc = gc;
+   this.board = board;
    this.bml = new boardMouseListener(this, this.playerColors, gc);
 
    // Create the deadwood board
@@ -219,37 +221,45 @@ public void toggleTurnOpts(Player player) {
    bMove.setVisible(true);
 }
 
-public void toggleMoveOpts(Player player, Board board) {
+public void toggleMoveOpts() {
    this.clearButtons();
    this.bml.clearButtons();
 
-   this.mLabel.setText("Choose a place to move");
+   Player player = this.gc.getActivePlayer();
 
-   LinkedList<String> locations = board.getAdjLocations(player);
+   if (gc.moveUsed()) {
+      this.toggleTurnOpts(player);
+   } else {
+      this.mLabel.setText("Choose a place to move");
 
-   int buttonYLoc = 30;
+      LinkedList<String> locations = this.board.getAdjLocations(player);
 
-   for (String locName : locations) {
-      JButton locButt = new JButton(locName);
-      locButt.setBackground(Color.white);
-      locButt.setBounds(this.iconWidth+10, buttonYLoc,140, 20);
-      locButt.addMouseListener(this.bml);
-      this.locButtons.add(locButt);
-      this.buttons.add(locButt);
+      int buttonYLoc = 30;
 
-      buttonYLoc += 30;
-   }
+      for (String locName : locations) {
+         JButton locButt = new JButton(locName);
+         locButt.setBackground(Color.white);
+         locButt.setBounds(this.iconWidth+10, buttonYLoc,140, 20);
+         locButt.addMouseListener(this.bml);
+         this.locButtons.add(locButt);
+         this.buttons.add(locButt);
 
-   this.bml.updateLocButtons(this.locButtons);
+         buttonYLoc += 30;
+      }
 
-   for (JButton button : this.locButtons) {
-      this.bPane.add(button, 3);
+      this.bml.updateLocButtons(this.locButtons);
+
+      for (JButton button : this.locButtons) {
+         this.bPane.add(button, 3);
+      }
    }
 }
 
-public void toggleTakeRoleOpts(Player player, Board board) {
+public void toggleTakeRoleOpts() {
    this.clearButtons();
    this.bml.clearButtons();
+
+   Player player = this.gc.getActivePlayer();
 
    this.mLabel.setText("Choose a role to act");
 
@@ -280,9 +290,11 @@ public void toggleTakeRoleOpts(Player player, Board board) {
    }
 }
 
-public void toggleWorkOnRoleOpts(Player player) {
+public void toggleWorkOnRoleOpts() {
    this.clearButtons();
    this.bml.clearButtons();
+
+   Player player = this.gc.getActivePlayer();
 
    this.mLabel.setText("act or rehearse?");
 
@@ -502,12 +514,13 @@ private void generateOffRoleOpts() {
          
          if (e.getSource() == bAct){
             playerlabel.setVisible(true);
-            System.out.println("Acting is Selected\n");
+            
          }
          else if (e.getSource() == bRehearse){
             System.out.println("Rehearse is Selected\n");
          } else if (e.getSource() == bMove){
             System.out.println("Move is Selected\n");
+            this.bll.toggleMoveOpts();
          } else if (e.getSource() == yesButton) {
             System.out.println("Yes is Selected\n");
          } else if (e.getSource() == noButton) {
@@ -557,7 +570,7 @@ private void generateOffRoleOpts() {
             System.out.println(this.selectedText);
          } else if (this.locButtons.contains(e.getSource())) {
             JButton currButton = (JButton) e.getSource();
-            this.selectedText = currButton.getText();
+            this.selectedText = "move " + currButton.getText();
             System.out.println(this.selectedText);
          } else if (this.roleButtons.contains(e.getSource())) {
             JButton currButton = (JButton) e.getSource();

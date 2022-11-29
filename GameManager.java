@@ -473,6 +473,10 @@ public class GameManager {
         return this.activePlayer;
     }
 
+    public boolean moveUsed() {
+        return this.moveUsed;
+    }
+
     public void setupPlayers(LinkedList<Player> players) {
         this.players = players;
 
