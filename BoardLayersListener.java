@@ -122,7 +122,7 @@ public class BoardLayersListener extends JFrame {
    bPane.add(mLabel, 2);
 
    this.warningLabel = new JLabel();
-   this.warningLabel.setBounds(icon.getIconWidth()+40,120,240,20);
+   this.warningLabel.setBounds(icon.getIconWidth()+40,120,300,20);
    this.warningLabel.setVisible(false);
    bPane.add(this.warningLabel, 2);
 
@@ -381,34 +381,13 @@ public void toggleTurnOpts() {
 public void toggleEndTurn() {
    this.clearButtons();
    this.mLabel.setText("End turn?");
-   this.toggleWarning(this.gc.getActivePlayer().getWarning());
-   this.bEnd.setVisible(true);
-}
-
-public void toggleWrapText() {
    Player activePlayer = this.gc.getActivePlayer();
    if (activePlayer.justWrapped()) {
-
-      for (JLabel label : this.infoLabels) {
-         this.bPane.remove(label);
-      }
-
-      LinkedList<String> msgs = activePlayer.getMsgs();
-
-      int labelYOffset = 150;
-      for (String msg : msgs) {
-
-         JLabel msgLabel = new JLabel(msg);
-         msgLabel.setBackground(Color.white);
-         msgLabel.setBounds(this.iconWidth+10, labelYOffset,240, 20);
-         msgLabel.addMouseListener(this.bml);
-         msgLabel.setVisible(true);
-         this.wrapInfoMsgs.add(msgLabel);
-         this.bPane.add(msgLabel);
-
-         labelYOffset += 30;
-      }
+      this.toggleWarning(activePlayer.getMsgs().get(0));
+   } else {
+      this.toggleWarning(this.gc.getActivePlayer().getWarning());
    }
+   this.bEnd.setVisible(true);
 }
 
 public void toggleMoveOpts() {
@@ -459,9 +438,9 @@ public void toggleTakeRoleOpts() {
    for (Role role : roles) {
       if (role.getDiceNum() <= rank && !role.isTaken()) {
          noRoles = false;
-         JButton roleButt = new JButton(role.getRoleName()+"\n"+role.getCatch());
+         JButton roleButt = new JButton(role.getRoleName() + "\n\"" + role.getCatch() + "\"");
          roleButt.setBackground(Color.white);
-         roleButt.setBounds(this.iconWidth+10, buttonYLoc,200, 40);
+         roleButt.setBounds(this.iconWidth+10, buttonYLoc,280, 20);
          roleButt.addMouseListener(this.bml);
          this.roleButtons.add(roleButt);
          this.buttons.add(roleButt);
@@ -858,7 +837,7 @@ private void generateOffRoleOpts() {
             Scanner tokenizer = new Scanner(this.selectedText);
             String roleName = tokenizer.nextLine();
             String quote = tokenizer.nextLine();
-            quote.substring(1,quote.length()-1);
+            quote = quote.substring(1,quote.length()-1);
             String cmd = "work " + roleName + "\n" + quote;
             this.gc.updateGameState(cmd);
             this.gc.updateGameState("end");

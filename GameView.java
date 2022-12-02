@@ -101,8 +101,4 @@ public class GameView {
     public void updatePlayerInfo() {
         this.bll.updatePlayerInfo();
     }
-
-    public void updateWrapText() {
-        this.bll.toggleWrapText();
-    }
 }

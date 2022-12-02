@@ -46,7 +46,6 @@ public class GameController {
         view.updatePlayerInfo();
         view.updateLocationState();
         view.updatePlayerLoc();
-        view.updateWrapText();
         this.scenesUsed = model.getScenesUsed();
         if (this.scenesUsed >= 9) {
             model.resetScenesUsed();
@@ -55,34 +54,4 @@ public class GameController {
             model.newDay();
         }
     }
-
-    private void gameLoop(Board board, int maxDays) {
-        Scanner input = new Scanner(System.in);
-        String cmd;
-        this.day = 0;
-
-        for (int currDay = 0; currDay < maxDays; ++currDay) {
-
-            String lastCmd = "";
-            while (true) {
-                cmd = view.getCmd();
-                if (cmd.equals(lastCmd)) {
-                    model.processCmd(cmd);
-                    lastCmd = cmd;
-                }
-
-                if (this.scenesUsed == 9) {
-                    this.scenesUsed = 0;
-                    break;
-                }
-            }
-
-            System.out.println("Day " + (currDay + 1) + " is over! That's a wrap.");
-            board.newDay();
-            board.setCards();
-        }
-
-        model.activateWin();
-    }
-    
 }
