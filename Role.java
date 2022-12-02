@@ -40,6 +40,10 @@ class Role {
         return this.onCard;
     }
 
+    public boolean isTaken() {
+        return this.roleTaken;
+    }
+
     public int getX() {
         return this.x;
     }

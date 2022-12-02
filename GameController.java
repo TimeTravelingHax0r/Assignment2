@@ -28,14 +28,32 @@ public class GameController {
         this.model.setPlayerNum(numPlayers);
     }
 
+    public void setWarning(String warning) {
+        this.view.setWarning(warning);
+    }
+
     // ask user to initialize player names and gender (for printing data)
     public void initPlayers(int numPlayers, int startRank, int startCredits) {
         view.initPlayers(numPlayers, startRank, startCredits, this);
     }
 
-    public Player startGame(LinkedList<Player> players) {
+    public void startGame(LinkedList<Player> players) {
         model.setupPlayers(players);
-        return model.getActivePlayer();
+    }
+
+    public void updateGameState(String cmd) {
+        model.processCmd(cmd);
+        view.updatePlayerInfo();
+        view.updateLocationState();
+        view.updatePlayerLoc();
+        view.updateWrapText();
+        this.scenesUsed = model.getScenesUsed();
+        if (this.scenesUsed >= 9) {
+            model.resetScenesUsed();
+            this.scenesUsed = model.getScenesUsed();
+
+            model.newDay();
+        }
     }
 
     private void gameLoop(Board board, int maxDays) {

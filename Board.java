@@ -4,12 +4,14 @@ import java.util.HashMap;
 
 public class Board {
     private LinkedList<Location> locations;
+    private LinkedList<Location> currLocs;
     private LinkedList<SceneCard> cards;
     private HashMap<String, LinkedList<String>> connections;
     private Upgrades upgrades;
 
     public Board(LinkedList<Location> locations, HashMap<String, LinkedList<String>> connections,
             LinkedList<SceneCard> cards, Upgrades upgrades) {
+        this.currLocs = new LinkedList<>();
         this.locations = locations;
         this.connections = connections;
         this.upgrades = upgrades;
@@ -36,8 +38,13 @@ public class Board {
         return this.upgrades;
     }
 
+    public LinkedList<Location> getCurrLocs() {
+        return this.currLocs;
+    }
+
     public void setCards() {
         Collections.shuffle(this.cards);
+        this.currLocs.clear();
         for (int i = 0; i < locations.size(); ++i) {
 
             Location currLoc = this.locations.get(i);
@@ -48,7 +55,7 @@ public class Board {
 
             SceneCard currCard = this.cards.pollFirst();
             currLoc.setCard(currCard);
-            this.cards.remove(currCard);
+            this.currLocs.add(currLoc);
         }
     }
 

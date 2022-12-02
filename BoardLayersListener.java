@@ -12,7 +12,13 @@ import javax.swing.*;
 import javax.swing.ImageIcon;
 import javax.imageio.ImageIO;
 import java.awt.event.*;
+import java.text.CollationElementIterator;
+import java.time.OffsetDateTime;
+import java.util.HashMap;
 import java.util.LinkedList;
+import java.util.Map;
+import java.util.Scanner;
+import java.util.TreeMap;
 
 import javax.swing.JOptionPane;
 
@@ -22,23 +28,30 @@ public class BoardLayersListener extends JFrame {
    private GameController gc;
    private Board board;
 
-   private static String[] playerColors = {"blue", "cyan", "green", "orange", "pink", "red", "violet", "white"};
+   private static String[] playerColors = {"blue", "cyan", "green", "orange", "pink", "red", "violet", "white", "yellow"};
+
+   private LinkedList<JLabel> cards;
+   private LinkedList<JLabel> cardBacks;
+   private LinkedList<JLabel> currTakes;
 
    // JLabels
    JLabel boardlabel;
    JLabel cardlabel;
    JLabel playerlabel;
    JLabel mLabel;
+   JLabel warningLabel;
+
+   // score board
+   JTable infoTable;
    
    //JButtons
-   JButton bAct;
-   JButton bRehearse;
+   JButton bWork;
+   JButton bEnd;
+   JButton bUpgrade;
    JButton bMove;
 
-   // Player selection buttons
-   JButton maleButton;
-   JButton femaleButton;
-   JButton gnButton;
+   // Player selection button
+   JButton confButton;
 
    // Role Buttons
    JButton yesButton;
@@ -59,6 +72,9 @@ public class BoardLayersListener extends JFrame {
    LinkedList<JButton> locButtons;
    LinkedList<JButton> roleButtons;
    LinkedList<JButton> numButtons;
+   LinkedList<JLabel> infoLabels;
+   LinkedList<JLabel> wrapInfoMsgs;
+   LinkedList<Component> upgradeComps;
 
    int iconWidth;
    
@@ -77,7 +93,12 @@ public class BoardLayersListener extends JFrame {
    this.locButtons = new LinkedList<>();
    this.roleButtons = new LinkedList<>();
    this.numButtons = new LinkedList<>();
-
+   this.infoLabels = new LinkedList<>();
+   this.cards = new LinkedList<>();
+   this.cardBacks = new LinkedList<>();
+   this.currTakes = new LinkedList<>();
+   this.wrapInfoMsgs = new LinkedList<>();
+   this.upgradeComps = new LinkedList<>();
    this.gc = gc;
    this.board = board;
    this.bml = new boardMouseListener(this, this.playerColors, gc);
@@ -95,41 +116,32 @@ public class BoardLayersListener extends JFrame {
    // Set the size of the GUI
    setSize(icon.getIconWidth()+300,icon.getIconHeight());
    
-   // Add a scene card to this room
-   cardlabel = new JLabel();
-   ImageIcon cIcon =  new ImageIcon("images/01.png");
-   cardlabel.setIcon(cIcon); 
-   cardlabel.setBounds(20,65,cIcon.getIconWidth()+2,cIcon.getIconHeight());
-   cardlabel.setOpaque(true);
-   
-   // Add the card to the lower layer
-   bPane.add(cardlabel, 1);
-   
-   // Add a dice to represent a player. 
-   // Role for Crusty the prospector. The x and y co-ordiantes are taken from Board.xml file
-   playerlabel = new JLabel();
-   ImageIcon pIcon = new ImageIcon("images/dice/r2.png");
-   playerlabel.setIcon(pIcon);
-   //playerlabel.setBounds(114,227,pIcon.getIconWidth(),pIcon.getIconHeight());  
-   playerlabel.setBounds(114,227,46,46);
-   playerlabel.setVisible(false);
-   bPane.add(playerlabel, 3);
-   
    // Create the Menu for action buttons
    mLabel = new JLabel("MENU");
    mLabel.setBounds(icon.getIconWidth()+40,0,180,20);
    bPane.add(mLabel, 2);
 
+   this.warningLabel = new JLabel();
+   this.warningLabel.setBounds(icon.getIconWidth()+40,120,240,20);
+   this.warningLabel.setVisible(false);
+   bPane.add(this.warningLabel, 2);
+
    // Create Action buttons
-   bAct = new JButton("ACT");
-   bAct.setBackground(Color.white);
-   bAct.setBounds(icon.getIconWidth()+10, 30,140, 20);
-   bAct.addMouseListener(this.bml);
+   bWork = new JButton("WORK");
+   bWork.setBackground(Color.white);
+   bWork.setBounds(icon.getIconWidth()+10, 30,140, 20);
+   bWork.addMouseListener(this.bml);
+
+   bEnd = new JButton("END TURN");
+   bEnd.setBackground(Color.white);
+   bEnd.setBounds(icon.getIconWidth()+10, 30,140, 20);
+   bEnd.addMouseListener(this.bml);
+   bEnd.setVisible(false);
    
-   bRehearse = new JButton("REHEARSE");
-   bRehearse.setBackground(Color.white);
-   bRehearse.setBounds(icon.getIconWidth()+10,60,140, 20);
-   bRehearse.addMouseListener(this.bml);
+   bUpgrade = new JButton("UPGRADE");
+   bUpgrade.setBackground(Color.white);
+   bUpgrade.setBounds(icon.getIconWidth()+10,60,140, 20);
+   bUpgrade.addMouseListener(this.bml);
    
    bMove = new JButton("MOVE");
    bMove.setBackground(Color.white);
@@ -137,10 +149,12 @@ public class BoardLayersListener extends JFrame {
    bMove.addMouseListener(this.bml);
 
    // Place the action buttons in the top layer
-   this.bPane.add(bAct, 2);
-   this.buttons.add(bAct);
-   this.bPane.add(bRehearse, 2);
-   this.buttons.add(bRehearse);
+   this.bPane.add(bWork, 2);
+   this.buttons.add(bWork);
+   this.bPane.add(bEnd, 2);
+   this.buttons.add(bEnd);
+   this.bPane.add(bUpgrade, 2);
+   this.buttons.add(bUpgrade);
    this.bPane.add(bMove, 2);
    this.buttons.add(bMove);
 
@@ -165,14 +179,157 @@ public LinkedList<Player> getPlayers() {
    return this.bml.getPlayers();
 }
 
+public String getColor(int whichColor) {
+   return this.playerColors[whichColor-1];
+}
+
 public void setNumRankCredits(int numPlayers, int rank, int credits) {
    this.bml.updatePlayerNum(numPlayers);
    this.bml.updateRank(rank);
    this.bml.updateCredit(credits);
 }
 
+public void setLabelFront(JLabel label) {
+   this.bPane.moveToFront(label);
+}
+
 public void updateTextColor(int playerNum) {
    this.textField.setText(this.playerColors[playerNum-1]);
+}
+
+public void initPlayerDice() {
+   LinkedList<Player> players = this.getPlayers();
+   int xOffSet = 0, yOffSet = 0;
+   for (Player player : players) {
+      String currImgName = "images/dice/" + player.getImgName() + player.getRank() + ".png";
+      JLabel diceLabel = new JLabel();
+      ImageIcon diceIcon =  new ImageIcon(currImgName);
+      diceLabel.setIcon(diceIcon);
+
+      Location currLoc = player.getLocation();
+      int x = currLoc.getX(), y = currLoc.getY(), h = currLoc.getH(), w = currLoc.getW();
+      diceLabel.setBounds(x+xOffSet,y+yOffSet,diceIcon.getIconWidth(),diceIcon.getIconHeight());
+
+      diceLabel.setVisible(true);
+      this.bPane.add(diceLabel);
+      this.bPane.moveToFront(diceLabel);
+      player.setLabel(diceLabel);
+
+      xOffSet += 50;
+      if (xOffSet > 194) {
+         xOffSet = 0;
+         yOffSet += 50;
+      }
+   }
+}
+
+public void updateLocationState(LinkedList<Location> locations) {
+
+   for (JLabel label : this.cards) {
+      this.bPane.remove(label);
+   }
+
+   for (JLabel label : this.cardBacks) {
+      this.bPane.remove(label);
+   }
+
+   for (JLabel label : this.currTakes) {
+      this.bPane.remove(label);
+   }
+
+   this.cards.clear();
+   this.cardBacks.clear();
+   this.currTakes.clear();
+
+   for (Location location : locations) {
+      JLabel cardLabel = new JLabel();
+      ImageIcon cIcon =  new ImageIcon("images/cards/" + location.getCard().getImg());
+      cardLabel.setIcon(cIcon); 
+      cardLabel.setBounds(location.getX(),location.getY(),cIcon.getIconWidth()+2,cIcon.getIconHeight());
+
+      JLabel cardLabelBack = new JLabel();
+      ImageIcon cIconBack =  new ImageIcon("images/CardBack-small.jpg");
+      cardLabelBack.setIcon(cIconBack); 
+      cardLabelBack.setBounds(location.getX(),location.getY(),cIconBack.getIconWidth()+2,cIconBack.getIconHeight());
+      
+      this.cards.add(cardLabel);
+      this.cardBacks.add(cardLabelBack);
+
+      if (!location.isDiscovered()) {
+         cardLabel.setVisible(false);
+         cardLabelBack.setVisible(true);
+      } else if (location.sceneAvailable()) {
+         cardLabel.setVisible(true);
+         cardLabelBack.setVisible(false);
+         LinkedList<Take> takes = location.getCurrTakes();
+         for (Take take : takes) {
+            JLabel takeLabel = new JLabel(); 
+            ImageIcon shotIcon = new ImageIcon("images/shot.png");
+            takeLabel.setIcon(shotIcon);
+            takeLabel.setBounds(take.getX(),take.getY(),take.getH(),take.getW());
+            takeLabel.setVisible(true);
+            this.currTakes.add(takeLabel);
+            this.bPane.add(takeLabel);
+         }
+      } else {
+         cardLabel.setVisible(false);
+         cardLabelBack.setVisible(false);
+      }
+
+      this.bPane.add(cardLabel);
+      this.bPane.add(cardLabelBack);
+      this.bPane.moveToFront(cardLabel);
+      this.bPane.moveToFront(cardLabelBack);
+
+   }
+
+   for (JLabel take : this.currTakes) {
+      this.bPane.moveToFront(take);
+   }
+}
+
+public void updatePlayerInfo() {
+   LinkedList<Player> players = this.getPlayers();
+
+   for (JLabel currLabel : this.infoLabels) {
+      this.bPane.remove(currLabel);
+   }
+
+   this.infoLabels.clear();
+
+   String[] colNames = {"Name", "Rank", "Dollars", "Credits"};
+
+   JLabel infoCols = new JLabel(String.format("%-8s | %-4s | %-7s | %-7s", colNames[0], colNames[1], colNames[2], colNames[3]));
+   infoCols.setBackground(Color.white);
+   infoCols.setBounds(this.iconWidth+10, 150,200, 20);
+   infoCols.addMouseListener(this.bml);
+   this.infoLabels.add(infoCols);
+   this.bPane.add(infoCols);
+
+   int i = 0;
+   int labelYOffset = 180;
+   for (Player player : players) {
+      String name = player.getName();
+      int rank = player.getRank();
+      int dollars = player.getDollars();
+      int credits = player.getCredits();
+
+      JLabel playerInfo = new JLabel(String.format("%-8s | %-4d | %-7d | %-7d", name, rank, dollars, credits));
+      playerInfo.setBackground(Color.white);
+      playerInfo.setBounds(this.iconWidth+10, labelYOffset,200, 20);
+      playerInfo.addMouseListener(this.bml);
+      this.infoLabels.add(playerInfo);
+      this.bPane.add(playerInfo);
+
+      labelYOffset += 30;
+
+      i++;
+   }
+}
+
+public void toggleWarning(String warning) {
+   this.warningLabel.setText(warning);
+   this.warningLabel.setVisible(true);
 }
 
 public void toggleHowManyOpts() {
@@ -193,32 +350,65 @@ public void togglePlayerNameOpts() {
    this.bml.clearButtons();
 
    this.textField.setText(this.playerColors[0]);
-   this.mLabel.setText("Player 1, please enter you name, and confirm with gender");
+   this.mLabel.setText("Player 1, please enter name");
 
    this.textField.setVisible(true);
-   this.maleButton.setVisible(true);
-   this.femaleButton.setVisible(true);
-   this.gnButton.setVisible(true);
+   this.confButton.setVisible(true);
 }
 
 public void initialTurnOpts() {
    this.clearButtons();
    this.bml.clearButtons();
 
-   Player activePlayer = gc.startGame(this.bml.getPlayers());
-   this.toggleTurnOpts(activePlayer);
+   gc.startGame(this.bml.getPlayers());
+   this.updateLocationState(this.board.getCurrLocs());
+   this.initPlayerDice();
+   this.toggleTurnOpts();
 }
 
-public void toggleTurnOpts(Player player) {
+public void toggleTurnOpts() {
    this.clearButtons();
-   gc.startGame(this.bml.getPlayers());
+   Player player = gc.getActivePlayer();
 
    String playerName = player.getName();
    this.mLabel.setText(playerName + ", select an action");
 
-   bAct.setVisible(true);
-   bRehearse.setVisible(true);
+   bWork.setVisible(true);
+   bUpgrade.setVisible(true);
    bMove.setVisible(true);
+}
+
+public void toggleEndTurn() {
+   this.clearButtons();
+   this.mLabel.setText("End turn?");
+   this.toggleWarning(this.gc.getActivePlayer().getWarning());
+   this.bEnd.setVisible(true);
+}
+
+public void toggleWrapText() {
+   Player activePlayer = this.gc.getActivePlayer();
+   if (activePlayer.justWrapped()) {
+
+      for (JLabel label : this.infoLabels) {
+         this.bPane.remove(label);
+      }
+
+      LinkedList<String> msgs = activePlayer.getMsgs();
+
+      int labelYOffset = 150;
+      for (String msg : msgs) {
+
+         JLabel msgLabel = new JLabel(msg);
+         msgLabel.setBackground(Color.white);
+         msgLabel.setBounds(this.iconWidth+10, labelYOffset,240, 20);
+         msgLabel.addMouseListener(this.bml);
+         msgLabel.setVisible(true);
+         this.wrapInfoMsgs.add(msgLabel);
+         this.bPane.add(msgLabel);
+
+         labelYOffset += 30;
+      }
+   }
 }
 
 public void toggleMoveOpts() {
@@ -227,31 +417,27 @@ public void toggleMoveOpts() {
 
    Player player = this.gc.getActivePlayer();
 
-   if (gc.moveUsed()) {
-      this.toggleTurnOpts(player);
-   } else {
-      this.mLabel.setText("Choose a place to move");
+   this.mLabel.setText("Choose a place to move");
 
-      LinkedList<String> locations = this.board.getAdjLocations(player);
+   LinkedList<String> locations = this.board.getAdjLocations(player);
 
-      int buttonYLoc = 30;
+   int buttonYLoc = 30;
 
-      for (String locName : locations) {
-         JButton locButt = new JButton(locName);
-         locButt.setBackground(Color.white);
-         locButt.setBounds(this.iconWidth+10, buttonYLoc,140, 20);
-         locButt.addMouseListener(this.bml);
-         this.locButtons.add(locButt);
-         this.buttons.add(locButt);
+   for (String locName : locations) {
+      JButton locButt = new JButton(locName);
+      locButt.setBackground(Color.white);
+      locButt.setBounds(this.iconWidth+10, buttonYLoc,140, 20);
+      locButt.addMouseListener(this.bml);
+      this.locButtons.add(locButt);
+      this.buttons.add(locButt);
 
-         buttonYLoc += 30;
-      }
+      buttonYLoc += 30;
+   }
 
-      this.bml.updateLocButtons(this.locButtons);
+   this.bml.updateLocButtons(this.locButtons);
 
-      for (JButton button : this.locButtons) {
-         this.bPane.add(button, 3);
-      }
+   for (JButton button : this.locButtons) {
+      this.bPane.add(button, 3);
    }
 }
 
@@ -263,23 +449,34 @@ public void toggleTakeRoleOpts() {
 
    this.mLabel.setText("Choose a role to act");
 
-   LinkedList<Role> roles = player.getLocation().getCard().getRoles();
-   roles.addAll(player.getLocation().getOffCard());
+   LinkedList<Role> roles = player.getLocation().getAllRoles();
 
    int rank = player.getRank();
 
    int buttonYLoc = 30;
 
+   boolean noRoles = true;
    for (Role role : roles) {
-      if (role.getDiceNum() <= rank) {
-         JButton roleButt = new JButton(role.getRoleName());
+      if (role.getDiceNum() <= rank && !role.isTaken()) {
+         noRoles = false;
+         JButton roleButt = new JButton(role.getRoleName()+"\n"+role.getCatch());
          roleButt.setBackground(Color.white);
-         roleButt.setBounds(this.iconWidth+10, buttonYLoc,140, 20);
+         roleButt.setBounds(this.iconWidth+10, buttonYLoc,200, 40);
          roleButt.addMouseListener(this.bml);
          this.roleButtons.add(roleButt);
          this.buttons.add(roleButt);
 
          buttonYLoc += 30;
+      }
+   }
+
+   if (noRoles) {
+      if (this.gc.moveUsed()) {
+         this.gc.updateGameState("end");
+      } else {
+         this.toggleTurnOpts();
+         this.toggleWarning("No roles available here");
+         return;
       }
    }
 
@@ -293,8 +490,6 @@ public void toggleTakeRoleOpts() {
 public void toggleWorkOnRoleOpts() {
    this.clearButtons();
    this.bml.clearButtons();
-
-   Player player = this.gc.getActivePlayer();
 
    this.mLabel.setText("act or rehearse?");
 
@@ -312,9 +507,61 @@ public void toggleWorkOffRoleOpts() {
    this.noButton.setVisible(true);
 }
 
-public void toggleUpgrade(Player player, Upgrades upgrades) {
+public void toggleUpgrade() {
    this.clearButtons();
    this.bml.clearButtons();
+
+   for (JLabel label : this.infoLabels) {
+      this.bPane.remove(label);
+   }
+
+   Upgrades upgradeMap = board.getUpgradeMap();
+   HashMap<Integer, Integer> dollarCosts = upgradeMap.getDollarCosts();
+   HashMap<Integer, Integer> creditCosts = upgradeMap.getCreditCosts();
+
+   Player activePlayer = this.gc.getActivePlayer();
+   int rank = activePlayer.getRank();
+   int dollars = activePlayer.getDollars();
+   int credits = activePlayer.getCredits();
+
+   int buttonYLoc = 150;
+   boolean buttonExits = false;
+   for (int i = 2; i < 7; ++i) {
+      if (i > rank && (dollarCosts.get(i) <= dollars || creditCosts.get(i) <= credits)) {
+         buttonExits = true;
+         
+         JLabel rankLabel = new JLabel("Rank " + i);
+         rankLabel.setBackground(Color.white);
+         rankLabel.setBounds(this.iconWidth+10, buttonYLoc,80, 20);
+         rankLabel.addMouseListener(this.bml);
+         this.upgradeComps.add(rankLabel);
+
+         JButton dollarButton = new JButton(i + ": $" + dollarCosts.get(i));
+         dollarButton.setBackground(Color.white);
+         dollarButton.setBounds(this.iconWidth+100, buttonYLoc,80, 20);
+         dollarButton.addMouseListener(this.bml);
+         this.upgradeComps.add(dollarButton);
+
+         JButton creditButton = new JButton(i + ": " + dollarCosts.get(i) + " credits");
+         creditButton.setBackground(Color.white);
+         creditButton.setBounds(this.iconWidth+190, buttonYLoc,80, 20);
+         creditButton.addMouseListener(this.bml);
+         this.upgradeComps.add(creditButton);
+
+         this.bPane.add(rankLabel);
+         this.bPane.add(dollarButton);
+         this.bPane.add(creditButton);
+
+         buttonYLoc += 30;
+      }
+
+      if (!buttonExits) {
+         this.gc.getActivePlayer().setWarning("No upgrades currently available");
+         this.toggleEndTurn();
+      }
+   }
+
+   this.bml.updateComps(this.upgradeComps);
 }
 
 private void clearButtons() {
@@ -330,9 +577,20 @@ private void clearButtons() {
       this.bPane.remove(button);
    }
 
+   for (JLabel label : this.wrapInfoMsgs) {
+      this.bPane.remove(label);
+   }
+
+   for (Component comp : upgradeComps) {
+      this.bPane.remove(comp);
+   }
+
+   this.wrapInfoMsgs.clear();
    this.locButtons.clear();
    this.roleButtons.clear();
+   this.upgradeComps.clear();
    this.textField.setVisible(false);
+   this.warningLabel.setVisible(false);
 }
 
 private void generatePlayerNumOpts() {
@@ -360,29 +618,13 @@ private void generatePlayerNamesOpts() {
    this.bPane.add(this.textField, 6);
    this.textField.setVisible(false);
 
-   this.maleButton = new JButton("MALE");
-   this.maleButton.setBackground(Color.white);
-   this.maleButton.setBounds(this.iconWidth+10, 60,140, 20);
-   this.maleButton.addMouseListener(this.bml);
-   this.buttons.add(this.maleButton);
-   this.bPane.add(this.maleButton, 6);
-   this.maleButton.setVisible(false);
-
-   this.femaleButton = new JButton("FEMALE");
-   this.femaleButton.setBackground(Color.white);
-   this.femaleButton.setBounds(this.iconWidth+10, 90,140, 20);
-   this.femaleButton.addMouseListener(this.bml);
-   this.buttons.add(this.femaleButton);
-   this.bPane.add(this.femaleButton, 6);
-   this.femaleButton.setVisible(false);
-
-   this.gnButton = new JButton("GENDER NEUTRAL");
-   this.gnButton.setBackground(Color.white);
-   this.gnButton.setBounds(this.iconWidth+10, 120,140, 20);
-   this.gnButton.addMouseListener(this.bml);
-   this.buttons.add(this.gnButton);
-   this.bPane.add(this.gnButton, 6);
-   this.gnButton.setVisible(false);
+   this.confButton = new JButton("CONFIRM NAME");
+   this.confButton.setBackground(Color.white);
+   this.confButton.setBounds(this.iconWidth+10, 60,140, 20);
+   this.confButton.addMouseListener(this.bml);
+   this.buttons.add(this.confButton);
+   this.bPane.add(this.confButton, 6);
+   this.confButton.setVisible(false);
 }
 
 private void generateOnRoleOpts() {
@@ -436,6 +678,7 @@ private void generateOffRoleOpts() {
       private LinkedList<JButton> roleButtons;
       private LinkedList<JButton> numButtons;
       private LinkedList<Player> players;
+      private LinkedList<Component> comps;
       private String selectedText;
       private int numPlayers;
       private int currPlayer;
@@ -503,6 +746,10 @@ private void generateOffRoleOpts() {
          this.numButtons = numButtons;
       }
 
+      public void updateComps(LinkedList<Component> comps) {
+         this.comps = comps;
+      }
+
       public void clearButtons() {
          this.locButtons.clear();
          this.roleButtons.clear();
@@ -512,70 +759,125 @@ private void generateOffRoleOpts() {
       // Code for the different button clicks
       public void mouseClicked(MouseEvent e) {
          
-         if (e.getSource() == bAct){
-            playerlabel.setVisible(true);
-            
-         }
-         else if (e.getSource() == bRehearse){
-            System.out.println("Rehearse is Selected\n");
+         if (e.getSource() == bWork){
+            Player activePlayer = this.gc.getActivePlayer();
+            Location currLoc = activePlayer.getLocation();
+            String locName = currLoc.getName();
+            if (locName.equals("trailer") || locName.equals("office")) {
+               if (this.gc.moveUsed()) {
+                  this.gc.updateGameState("end");
+                  this.bll.toggleTurnOpts();
+               } else {
+                  this.bll.toggleWarning("Cannot work here");
+               }
+            } else if (!currLoc.sceneAvailable()) {
+               this.bll.toggleWarning("Scene wrapped!");
+            } else {
+               if (!activePlayer.workingRole()) {
+                  this.bll.toggleWorkOffRoleOpts();
+               } else {
+                  this.bll.toggleWorkOnRoleOpts();
+               }
+            }
+         } else if (e.getSource() == bEnd) { 
+            this.gc.updateGameState("end");
+            this.bll.toggleTurnOpts();
+         } else if (e.getSource() == bUpgrade){
+            Player activePlayer = this.gc.getActivePlayer();
+            if (activePlayer.getLocation().getName().equals("office")) {
+               this.bll.toggleUpgrade();
+            } else {
+               this.bll.toggleWarning("You can only upgrade at the office!");
+            }
          } else if (e.getSource() == bMove){
-            System.out.println("Move is Selected\n");
-            this.bll.toggleMoveOpts();
+            Player activePlayer = this.gc.getActivePlayer();
+            if (activePlayer.workingRole()) {
+               this.bll.toggleWarning("Cannot move while working!");
+            } else if (!this.gc.moveUsed()) {
+                  this.bll.toggleMoveOpts();
+            } else {
+               this.bll.toggleWarning("Already moved!");
+            }
          } else if (e.getSource() == yesButton) {
-            System.out.println("Yes is Selected\n");
+            this.bll.toggleTakeRoleOpts();
          } else if (e.getSource() == noButton) {
-            System.out.println("No is Selected\n");
+            this.gc.updateGameState("end");
+            this.bll.toggleTurnOpts();
          } else if (e.getSource() == actButton) {
-            System.out.println("Act sub button is Selected\n");
+            Player activePlayer = gc.getActivePlayer();
+            if (activePlayer.getLocation().sceneAvailable()) {
+               this.gc.updateGameState("act");
+               this.bll.toggleEndTurn();
+            } else {
+               this.bll.toggleWarning("Scene already wrapped");
+            }
+            
          } else if (e.getSource() == rehearseButton) {
-            System.out.println("Rehearse sub button is Selected\n"); 
-         } else if (e.getSource() == maleButton) {
-            System.out.println("Male is Selected\n");
-            System.out.println(this.currPlayer + " " + this.numPlayers);
-            if (this.currPlayer < this.numPlayers) {
-               this.players.add(new Player(this.textField.getText(), this.startRank, this.startCredits, "He"));
-               this.currPlayer++;
-               this.bll.updateTextColor(this.currPlayer);
-               this.label.setText("Player " + this.currPlayer + " enter name and confirm with gender");
+            Player activePlayer = gc.getActivePlayer();
+            if (activePlayer.getLocation().sceneAvailable()) {
+               if (activePlayer.getChips() >= 5) {
+                  this.bll.toggleTurnOpts();
+                  this.bll.toggleWarning("Already have maximum practice tokens");
+               } else {
+                  this.gc.updateGameState("rehearse");
+                  this.gc.updateGameState("end");
+                  this.bll.toggleTurnOpts();
+               }
             } else {
-               System.out.println("why am I here");
+               this.bll.toggleWarning("Scene already wrapped");
+            }
+         } else if (e.getSource() == confButton) {
+            String diceColor = this.bll.getColor(this.currPlayer).substring(0,1);
+            this.players.add(new Player(this.textField.getText(), this.startRank, this.startCredits, "He", diceColor));
+            this.currPlayer++;
+            this.bll.updateTextColor(this.currPlayer);
+            this.label.setText("Player " + this.currPlayer + ", please enter name");
+            if (this.currPlayer > this.numPlayers) {
                bll.initialTurnOpts();
             }
-         } else if (e.getSource() == femaleButton) {
-            System.out.println("Female is Selected\n");
-            System.out.println(this.currPlayer + " " + this.numPlayers);
-            if (this.currPlayer < this.numPlayers) {
-               this.players.add(new Player(this.textField.getText(), this.startRank, this.startCredits, "She"));
-               this.currPlayer++;
-               this.bll.updateTextColor(this.currPlayer);
-               this.label.setText("Player " + this.currPlayer + " enter name and confirm with gender");
-            } else {
-               bll.initialTurnOpts();
-            }
-         } else if (e.getSource() == gnButton) {
-            System.out.println("Gender Neutal is Selected\n");
-            System.out.println(this.currPlayer + " " + this.numPlayers);
-            if (this.currPlayer < this.numPlayers) {
-               this.players.add(new Player(this.textField.getText(), this.startRank, this.startCredits, "They"));
-               this.currPlayer++;
-               this.bll.updateTextColor(this.currPlayer);
-               this.label.setText("Player " + this.currPlayer + " enter name and confirm with gender");
-            } else {
-               bll.initialTurnOpts();
-            }
-         } else if (this.numButtons.contains(e.getSource())) {
+         }  else if (this.numButtons.contains(e.getSource())) {
             JButton currButton = (JButton) e.getSource();
             this.selectedText = currButton.getText();
             this.gc.setPlayerNum(Integer.parseInt(this.selectedText));
-            System.out.println(this.selectedText);
          } else if (this.locButtons.contains(e.getSource())) {
             JButton currButton = (JButton) e.getSource();
-            this.selectedText = "move " + currButton.getText();
-            System.out.println(this.selectedText);
+            this.selectedText = currButton.getText();
+            String cmd = "move " +  this.selectedText;
+            this.gc.updateGameState(cmd);
+            Player activePlayer = this.gc.getActivePlayer();
+            Location currLoc = activePlayer.getLocation();
+            if (currLoc.getName().equals("trailer") || !currLoc.sceneAvailable()) {
+               activePlayer.setWarning("No more options here");
+               this.bll.toggleEndTurn();
+            } else {
+               this.bll.toggleTurnOpts();
+            }
          } else if (this.roleButtons.contains(e.getSource())) {
             JButton currButton = (JButton) e.getSource();
             this.selectedText = currButton.getText();
-            System.out.println(this.selectedText);
+            Scanner tokenizer = new Scanner(this.selectedText);
+            String roleName = tokenizer.nextLine();
+            String quote = tokenizer.nextLine();
+            quote.substring(1,quote.length()-1);
+            String cmd = "work " + roleName + "\n" + quote;
+            this.gc.updateGameState(cmd);
+            this.gc.updateGameState("end");
+            this.bll.toggleTurnOpts();
+         } else if (this.comps.contains(e.getSource())) {
+            JButton currButton = (JButton) e.getSource();
+            this.selectedText = currButton.getText();
+            Scanner tokenizer = new Scanner(this.selectedText);
+            String rank = tokenizer.next(); 
+            tokenizer.next();
+            rank = rank.substring(0,1);
+            if (tokenizer.hasNext()) {
+               //credit
+               this.gc.updateGameState("upgrade C " + rank);
+            } else {
+               this.gc.updateGameState("upgrade D " + rank);
+            }
+            this.gc.getActivePlayer().setWarning("Successfully upgraded to rank " + rank);
+            this.bll.toggleEndTurn();
          } else {
             System.out.println("error: button not found");
          }
@@ -587,24 +889,6 @@ private void generateOffRoleOpts() {
       public void mouseEntered(MouseEvent e) {
       }
       public void mouseExited(MouseEvent e) {
-      }
-
-      private Player makePlayer(String currPlayer, int startRank, int startCredits, String genderChoice) {
-         String playerGender;   
-         switch (genderChoice) {
-               case "M":
-                  playerGender = "He";
-                  break;
-               case "F":
-                  playerGender = "She";
-                  break;
-               case "GN":
-               default:
-                  playerGender = "They";
-                  break;
-            }
-
-            return new Player(currPlayer, startRank, startCredits, playerGender);
       }
    }
 }

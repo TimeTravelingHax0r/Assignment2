@@ -128,10 +128,12 @@ public class GameManager {
                     this.maxDays = 4;
                     this.startCredits = 0;
                     this.startRank = 2;
+                    break;
                 case 8:
                     this.maxDays = 4;
                     this.startCredits = 0;
                     this.startRank = 2;
+                    break;
                 default:
                     System.out.println("Unrecognized player amount!");
             }
@@ -202,6 +204,7 @@ public class GameManager {
                     Element takesElement = (Element) takes;
                     NodeList takeList = takesElement.getElementsByTagName("take");
                     int highestTake = 0;
+                    HashMap<Integer, Take> takesMap = new HashMap<>();
                     for (int j = 0; j < takeList.getLength(); ++j) {
                         Node take = takeList.item(j);
                         if (take.getNodeType() == Node.ELEMENT_NODE) {
@@ -210,6 +213,16 @@ public class GameManager {
                             int currTakeInt = Integer.parseInt(currTake);
                             if (currTakeInt > highestTake) {
                                 highestTake = currTakeInt;
+                            }
+
+                            Node takeArea = takeElement.getElementsByTagName("area").item(0);
+                            if (takeArea.getNodeType() == Node.ELEMENT_NODE) {
+                                Element takeAreaElement = (Element) takeArea;
+                                int takeX = Integer.parseInt(takeAreaElement.getAttribute("x"));
+                                int takeY = Integer.parseInt(takeAreaElement.getAttribute("y"));
+                                int takeH = Integer.parseInt(takeAreaElement.getAttribute("h"));
+                                int takeW = Integer.parseInt(takeAreaElement.getAttribute("w"));
+                                takesMap.put(currTakeInt, new Take(takeX, takeY, takeH, takeW));
                             }
                         }
                     }
@@ -241,7 +254,7 @@ public class GameManager {
                     }
 
                     // generate location
-                    Location currLocation = new Location(currName, roles, highestTake, x, y, h, w);
+                    Location currLocation = new Location(currName, roles, highestTake, takesMap, x, y, h, w);
                     locations.add(currLocation);
                     connections.put(currName, neighborsList);
 
@@ -400,6 +413,7 @@ public class GameManager {
 
                     // get name, budget, and scene
                     String cardName = cardElement.getAttribute("name");
+                    String img = cardElement.getAttribute("img");
                     int budget = Integer.parseInt(cardElement.getAttribute("budget"));
 
                     Node sceneNode = cardElement.getElementsByTagName("scene").item(0);
@@ -435,7 +449,7 @@ public class GameManager {
                     }
 
                     // generate new card with details
-                    SceneCard currCard = new SceneCard(cardName, budget, sceneNum, sceneDesc, roles);
+                    SceneCard currCard = new SceneCard(cardName, budget, sceneNum, sceneDesc, roles, img);
                     cards.add(currCard);
 
                     // FOR DEBUGGING
@@ -475,6 +489,14 @@ public class GameManager {
 
     public boolean moveUsed() {
         return this.moveUsed;
+    }
+
+    public int getScenesUsed() {
+        return this.scenesUsed;
+    }
+
+    public void resetScenesUsed() {
+        this.scenesUsed = 0;
     }
 
     public void setupPlayers(LinkedList<Player> players) {
@@ -526,7 +548,7 @@ public class GameManager {
                 break;
 
             case "upgrade":
-                this.upgrade();
+                this.upgrade(cmd);
                 break;
 
             case "end":
@@ -674,6 +696,8 @@ public class GameManager {
         Scanner tokenizer = new Scanner(cmd);
         tokenizer.next();
         String newRoleName = tokenizer.nextLine().substring(1);
+        String newRoleQuote = tokenizer.nextLine();
+        System.out.println("new role: " + newRoleName + " new quote: " + newRoleQuote);
 
         boolean workLegal = !playerLoc.getName().equals("office") && !playerLoc.getName().equals("trailer");
         workLegal = workLegal && playerLoc.sceneAvailable();
@@ -685,7 +709,7 @@ public class GameManager {
 
             // if not already working a role
             if (!workingRole) {
-                this.activePlayer.getLocation().takeRole(this.activePlayer, newRoleName);
+                this.activePlayer.getLocation().takeRole(this.activePlayer, newRoleName, newRoleQuote);
             } else {
                 System.out.println("already working role.");
             }
@@ -713,11 +737,11 @@ public class GameManager {
             if (currRole.onCard()) {
 
                 if (roll >= currBudget) {
-                    System.out.println("success! you got $2 credits");
+                    this.activePlayer.setWarning("success! " + this.activePlayer.getName() + " got $2 credits");
                     this.wrapped(currLocation.takeCounter(this.activePlayer));
                     this.activePlayer.updateCredits(2);
                 } else {
-                    System.out.println("fail! you get nothing");
+                    this.activePlayer.setWarning("fail! " + this.activePlayer.getName() + " get nothing");
                 }
 
                 this.worked = true;
@@ -725,13 +749,13 @@ public class GameManager {
             } else {
 
                 if (roll >= currBudget) {
-                    System.out.println("success! you got 1$ and 1 credit");
+                    this.activePlayer.setWarning("success! " + this.activePlayer.getName() + " got 1$ and 1 credit");
                     this.wrapped(currLocation.takeCounter(this.activePlayer));
                     this.activePlayer.updateDollars(1);
                     this.activePlayer.updateCredits(1);
                 } else {
                     this.activePlayer.updateDollars(1);
-                    System.out.println("fail! you only get $1");
+                    this.activePlayer.setWarning("fail! " + this.activePlayer.getName() + " only get $1");
                 }
 
                 this.worked = true;
@@ -772,7 +796,13 @@ public class GameManager {
     }
 
     // displays information on upgrade costs and allows user to choose upgrades
-    private void upgrade() {
+    private void upgrade(String cmd) {
+
+        Scanner tokenizer = new Scanner(cmd);
+        tokenizer.next();
+        String payMethod = tokenizer.next();
+        int rankChoice = tokenizer.nextInt();
+
 
         String currLocName = this.activePlayer.getLocation().getName();
         boolean upgradeAllowed = currLocName.equals("office");
@@ -782,42 +812,6 @@ public class GameManager {
             Upgrades upgrades = board.getUpgradeMap();
             HashMap<Integer, Integer> dollarCosts = upgrades.getDollarCosts();
             HashMap<Integer, Integer> creditCosts = upgrades.getCreditCosts();
-
-            String rankText = "Rank";
-            String dollarText = "Dollars";
-            String creditText = "Credits";
-            // print out information on upgrades
-            System.out.printf("%8s %8s %8s\n", rankText, dollarText, creditText);
-            for (int i = 0; i < 26; ++i) {
-                System.out.print("-");
-            }
-
-            System.out.println("");
-
-            for (int rank = 2; rank < 7; ++rank) {
-                System.out.printf("%8d %8d %8d\n", rank, dollarCosts.get(rank), creditCosts.get(rank));
-            }
-
-            for (int i = 0; i < 26; ++i) {
-                System.out.print("-");
-            }
-            System.out.println("");
-
-            // ask whether paying with dollars or credits until correct input
-            System.out.print("How would you like to pay? [D/C]: ");
-            String payMethod = this.scan.next();
-            while (!payMethod.equals("D") && !payMethod.equals("C")) {
-                System.out.print("incorrect option, please try again: ");
-                payMethod = this.scan.next();
-            }
-
-            // ask which rank until correct input
-            System.out.print("Which rank would you like? [2-6]: ");
-            int rankChoice = this.scan.nextInt();
-            while (rankChoice < 2 || rankChoice > 6) {
-                System.out.print("incorrect rank, please choose between [2-6]: ");
-                rankChoice = this.scan.nextInt();
-            }
 
             int currRank = this.activePlayer.getRank();
 
@@ -893,6 +887,11 @@ public class GameManager {
 
     //     this.activateWin.activate();
     // }
+
+    public void newDay() {
+        this.board.newDay();
+        this.board.setCards();
+    }
 
     // reset variables for next player's turn
     private void finishTurn() {

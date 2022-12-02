@@ -6,18 +6,22 @@ public class Location {
     private String name;
     private SceneCard card;
     private boolean sceneAvailable;
+    private boolean isDiscovered;
     public LinkedList<Role> offCardRoles;
-    private int totalShots;
-    private int shotsLeft;
+    private int totalTakes;
+    private int takesLeft;
+    private HashMap<Integer, Take> takes;
     private boolean isSpecial; // used for trailer, casting office
     private int x, y, h, w;
 
-    public Location(String name, LinkedList<Role> offCardRoles, int shots, int x, int y, int h, int w) {
+    public Location(String name, LinkedList<Role> offCardRoles, int totalTakes, HashMap<Integer, Take> takes, int x, int y, int h, int w) {
         this.name = name;
         this.offCardRoles = offCardRoles;
         this.sceneAvailable = true;
-        this.totalShots = shots;
-        this.shotsLeft = this.totalShots;
+        this.isDiscovered = false;
+        this.totalTakes = totalTakes;
+        this.takesLeft = this.totalTakes;
+        this.takes = takes;
         this.isSpecial = false;
         this.x = x;
         this.y = y;
@@ -28,6 +32,7 @@ public class Location {
     public Location(String name, int x, int y, int h, int w) {
         this.name = name;
         this.isSpecial = true;
+        this.sceneAvailable = true;
         this.x = x;
         this.y = y;
         this.h = h;
@@ -62,6 +67,31 @@ public class Location {
         }
     }
 
+    public LinkedList<Role> getAllRoles() {
+        LinkedList<Role> retList = new LinkedList<>();
+        if (!isSpecial) {
+            retList.addAll(this.offCardRoles);
+            retList.addAll(this.card.getRoles());
+        } else {
+            retList = null;
+        }
+
+        return retList;
+    }
+
+    public LinkedList<Take> getCurrTakes() {
+
+        LinkedList<Take> retList = new LinkedList<>();
+
+        if (this.sceneAvailable) {
+            for (int i = this.takesLeft; i > 0; --i) {
+                retList.add(this.takes.get(i));
+            }
+        } 
+
+        return retList;
+    }
+
     public int getX() {
         return this.x;
     }
@@ -78,6 +108,10 @@ public class Location {
         return this.w;
     }
 
+    public void setDiscovery() {
+        this.isDiscovered = true;
+    }
+
     public void setCard(SceneCard card) {
         if (!isSpecial) {
             this.card = card;
@@ -87,19 +121,19 @@ public class Location {
     }
 
     // gets role from this location, sets player onto role
-    public void takeRole(Player player, String roleName) {
+    public void takeRole(Player player, String roleName, String roleQuote) {
 
         if (!this.isSpecial) {
             Role playerRole = null;
 
             for (Role role : this.offCardRoles) {
-                if (role.getRoleName().equals(roleName)) {
+                if (role.getRoleName().equals(roleName) && role.getCatch().equals(roleQuote)) {
                     playerRole = role;
                 }
             }
 
             for (Role role : this.card.getRoles()) {
-                if (role.getRoleName().equals(roleName)) {
+                if (role.getRoleName().equals(roleName) && role.getCatch().equals(roleQuote)) {
                     playerRole = role;
                 }
             }
@@ -124,19 +158,24 @@ public class Location {
         return this.sceneAvailable;
     }
 
+    public boolean isDiscovered() {
+        return this.isDiscovered;
+    }
+
     // resets shot counter for next scene
     public void resetScene() {
-        this.shotsLeft = this.totalShots;
+        this.takesLeft = this.totalTakes;
         this.sceneAvailable = true;
+        this.isDiscovered = false;
     }
 
     // take counter from board and wrap scene if final counter
     public boolean takeCounter(Player activePlayer) {
-        if (this.shotsLeft == 1) {
+        if (this.takesLeft == 1) {
             this.wrapScene(activePlayer);
             return true;
         } else {
-            this.shotsLeft--;
+            this.takesLeft--;
             return false;
         }
     }
@@ -144,7 +183,9 @@ public class Location {
     // wraps up scene
     private void wrapScene(Player activePlayer) {
 
-        System.out.println("The scene " + this.card.getName() + " is wrapped!");
+        LinkedList<String> sceneWrapMsgs = new LinkedList<>();
+
+        sceneWrapMsgs.add("The scene " + this.card.getName() + " is wrapped!");
 
         int currBudget = this.getBudget();
         LinkedList<Integer> diceRolls = activePlayer.rollDice(currBudget);
@@ -171,7 +212,7 @@ public class Location {
                 String currName = currPlayer.getName();
                 int award = diceRolls.get(roll);
 
-                System.out.println(currName + " is awarded $" + award + "!");
+                sceneWrapMsgs.add(currName + " is awarded $" + award + "!");
 
                 currPlayer.updateDollars(award);
             }
@@ -194,7 +235,7 @@ public class Location {
                 String currName = currPlayer.getName();
                 int award = role.getDiceNum();
 
-                System.out.println(currName + " is awarded $" + award + "!");
+                sceneWrapMsgs.add(currName + " is awarded $" + award + "!");
                 currPlayer.updateDollars(award);
             }
         }
@@ -218,5 +259,7 @@ public class Location {
         }
 
         this.sceneAvailable = false;
+        activePlayer.setWrapped();
+        activePlayer.setWrapMsgs(sceneWrapMsgs);
     }
 }
