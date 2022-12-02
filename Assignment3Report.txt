@@ -1,0 +1,32 @@
+Authors: Maxwell Schultz and Cole Yamamura
+Assignment 3 Report
+
+    Our implementation of Deadwood focuses on the use of many functions to create high
+cohesion while combining this with the MVC model to effectively manage graphics. 
+While low coupling was difficult on this project due to the high number of objects required
+for such a large coding project, high cohesion was implemented to keep functions simple and
+readable. This can be seen in the GameManager class, where each game command is individually 
+called from the buttons within the central manager of the graphics assets (BoardLayersListener),
+which is largely controlled by the GameView class. These simple functions are implemented in a
+similar way to the command pattern, where an external object sets strings to affect the state
+of a central class that executes commands. 
+    The MVC structure is one of the most important within our implementation of the game. 
+GameController, and GameView work in tandem with the model of GameManager to handle and get 
+logic, while also working with BoardLayersListener to work with all of the graphics assets. 
+While the model and the asset manager both contain many attributes and functions, these are easily
+managed by the MVC structure, where the view and controller classes are much smaller and simpler to use.
+The two classes use large abstractions to allow the developer to work with the more complex classes
+and their connected classes without having to deal with the many things within. This is what allows the
+game state and the states of the graphics to not disrupt each other. The graphics classes like GameView
+and BoardLayersListener get information from GameManager, Board, and the many other classes they work with
+through GameController. Any state of the graphics is purely based on this information, making the chance
+of an invalid game state low.
+    The very simple concept of getters and setters from introductory polymorphic design, helped structure how
+data is stored and passed throughout the entire program. Game state is retrieved from functions to keep data
+fresh and relevant, limiting duplicate data, and erroneous data. Attributes default as private and the only 
+public methods are ones that have to be called outside a class. This is another simple but very important
+feature that keeps the game state valid. 
+    To keep the machinery of the original game, we decided to keep the command system. It was a very 
+effective way to active moves in the game while also giving GameManager necessary data from the graphics
+side of things. This allowed reuse of huge amounts of code, allowing us to focus on implementing the
+graphics facilities for the game. 
